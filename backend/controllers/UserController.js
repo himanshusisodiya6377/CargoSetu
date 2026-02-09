@@ -6,7 +6,7 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
 
-const registerUser =async (req, res) => {
+const registerUser =async(req, res) =>{
     // console.log(req.body);
   const { name, email, password } = req.body;
 
@@ -48,7 +48,7 @@ const registerUser =async (req, res) => {
   }
 };
 
-const loginUser =async (req, res) => {
+const loginUser =async(req, res) =>{
     console.log(req.body);
   const { email, password } = req.body;
 
@@ -136,7 +136,7 @@ const loginAsSender =async (req, res) => {
     });
   }
 
-  // If password is correct, update the role to 'seller'
+  // If password is correct, update the role to 'sender'
   user.role = "Sender";
   await user.save();
 
