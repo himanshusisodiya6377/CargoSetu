@@ -11,7 +11,7 @@ router.get("/logout", logoutUser);
 router.post("/sender", loginAsSender);
 router.get("/sender_amount",auth, getUserBalance);
 router.get("/users", auth, isAdmin, getAllUser);
-router.get("/estimate_income", auth, isAdmin, estimateIncome);
+router.get("/estimate-income", auth, isAdmin, estimateIncome);
 
 
 module.exports = router;

@@ -1,0 +1,95 @@
+const mongoose = require("mongoose");
+
+const loadSchema = mongoose.Schema(
+  {
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    images: [
+      {
+        url: String,
+        public_id: String,
+      },
+    ],
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    pickupLocation: {
+      type: String,
+      required: true,
+    },
+    dropLocation: {
+      type: String,
+      required: true,
+    },
+    pickupDate: Date,
+    deliveryDate: Date,
+    weight: {
+      type: Number,
+      required: true,
+    },
+    dimensions: {
+      length: Number,
+      width: Number,
+      height: Number,
+    },
+    vehicleType: {
+      type: String,
+      enum: ["BIKE", "AUTO", "MINI_TRUCK", "TRUCK", "CONTAINER", "TRAILER"],
+      required: true,
+    },
+    cargoType: {
+      type: String,
+      enum: ["GENERAL", "FRAGILE", "LIQUID", "PERISHABLE", "HEAVY", "HAZARDOUS"],
+      default: "General",
+    },
+    bidStartTime: {
+      type: Date,
+      required: true,
+    },
+    bidEndTime: {
+      type: Date,
+      required: true,
+    },
+    bids: [
+      {
+        driver: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        amount: Number,
+        bidTime: { type: Date, default: Date.now },
+      },
+    ],
+    lowestBid: {
+      amount: Number,
+      driver: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    },
+    assignedDriver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    adminCommission: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: String,
+      enum: ["OPEN", "BIDDING", "ASSIGNED", "IN_TRANSIT", "DELIVERED"],
+      default: "OPEN",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Load", loadSchema);

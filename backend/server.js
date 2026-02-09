@@ -7,6 +7,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const User = require("./routes/User");
+const Load = require("./routes/LoadRoutes.js");
 
 
 const app = express();
@@ -30,7 +31,9 @@ app.get("/", (req, res) => {
 
 
 //Routes Middleware
+
 app.use("/api/users",User);
+app.use("/api/Loads",Load);
 
 
 
