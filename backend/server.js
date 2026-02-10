@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const User = require("./routes/User");
 const Load = require("./routes/LoadRoutes.js");
+const biddingRoutes=require("./routes/biddingRoutes.js")
 
 
 const app = express();
@@ -34,6 +35,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/users",User);
 app.use("/api/Loads",Load);
+app.use("/api/bidding", biddingRoutes);
 
 
 

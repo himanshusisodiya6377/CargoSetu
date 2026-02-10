@@ -1,6 +1,7 @@
 const Load = require("../models/Load");
 const cloudinary = require("../config/cloudinary.js");
 const fs = require("fs");
+const biddingLoad=require("../models/biddingLoad.js")
 
 const createLoad = async(req, res) =>{
   try {
@@ -48,9 +49,37 @@ const createLoad = async(req, res) =>{
   }
 };
 
-const getAllLoads = async(req, res) =>{
-    //implemented after big model created
+const getAllLoads = async (req, res) => {
+  try {
+    const loads = await Load.find({}).sort({ createdAt: -1 }).populate("sender", "name email");
+
+    const loadsWithDetails = await Promise.all(
+      loads.map(async (load) => {
+        // Lowest bid wins in CargoSetu
+        const lowestBid = await biddingLoad.findOne({ load: load._id }).sort({ amount: 1 });
+        const totalBids = await biddingLoad.countDocuments({
+          load: load._id,
+        });
+        return {
+          ...load._doc,
+          currentLowestBid: lowestBid ? lowestBid.amount : null,
+          totalBids,
+        };
+      })
+    );
+    return res.status(200).json({
+      success: true,
+      count: loadsWithDetails.length,
+      data: loadsWithDetails,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch loads",
+      error: error.message,
+    });
+  }
 };
+
 
 const deleteLoad =async(req, res) =>{
   try {
@@ -161,21 +190,33 @@ const updateLoad = async(req, res) =>{
   }
 };
 
-const getAllLoadsOfUser = async(req, res) => {
+const getAllLoadsOfUser = async (req, res) => {
   try {
-    const userId = req.user._id;
-
-    // Get loads created by this sender
-    const loads = await Load.find({ sender: userId })
+    const senderId = req.user._id;
+    // Fetch loads created by this sender
+    const loads = await Load.find({ sender: senderId })
       .sort({ createdAt: -1 })
-      .populate("sender");
-    
-      //completed after bid model
+      .populate("sender", "name email");
 
+    const loadsWithDetails = await Promise.all(
+      loads.map(async (load) => {
+       
+        const lowestBid = await biddingLoad.findOne({ load: load._id }).sort({ amount: 1 });
+
+        const totalBids = await biddingLoad.countDocuments({
+          load: load._id,
+        });
+        return {
+          ...load._doc,
+          currentLowestBid: lowestBid ? lowestBid.amount : null,
+          totalBids,
+        };
+      })
+    );
     return res.status(200).json({
       success: true,
-      count: loadsWithBids.length,
-      data: loadsWithBids,
+      count: loadsWithDetails.length,
+      data: loadsWithDetails,
     });
   } catch (error) {
     return res.status(500).json({
@@ -184,6 +225,7 @@ const getAllLoadsOfUser = async(req, res) => {
     });
   }
 };
+
 
 const verifyAndAddCommissionLoadByAdmin = async(req, res) =>{
   try {
@@ -225,16 +267,29 @@ const verifyAndAddCommissionLoadByAdmin = async(req, res) =>{
   }
 };
 
-const getAllLoadsByAdmin = async(req, res)=>{
+const getAllLoadsByAdmin = async (req, res) => {
   try {
-    const loads = await Load.find({})
-      .sort({ createdAt: -1 })
-      .populate("sender");
-    //after bid model
+    const loads = await Load.find({}).sort({ createdAt: -1 }).populate("sender", "name email role");
+
+    const loadsWithDetails = await Promise.all(
+      loads.map(async (load) => {
+        const lowestBid = await biddingLoad.findOne({ load: load._id }).sort({ amount: 1 });
+
+        const totalBids = await biddingLoad.countDocuments({
+          load: load._id,
+        });
+        return {
+          ...load._doc,
+          currentLowestBid: lowestBid ? lowestBid.amount : null,
+          totalBids,
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
-      count: loadsWithBidInfo.length,
-      data: loadsWithBidInfo,
+      count: loadsWithDetails.length,
+      data: loadsWithDetails,
     });
   } catch (error) {
     return res.status(500).json({
@@ -243,6 +298,7 @@ const getAllLoadsByAdmin = async(req, res)=>{
     });
   }
 };
+
 
 const deleteLoadsByAdmin = async (req, res) => {
   try {
@@ -267,7 +323,7 @@ const deleteLoadsByAdmin = async (req, res) => {
     }
 
     // Delete related bids
-    // await Bid.deleteMany({ load: { $in: loadIds } });
+    await biddingLoad.deleteMany({ load: { $in: loadIds } });
 
     const result = await Load.deleteMany({ _id: { $in: loadIds } });
 
@@ -285,10 +341,7 @@ const deleteLoadsByAdmin = async (req, res) => {
 
 const getAllCompletedLoads = async (req, res) => {
   try {
-    const loads = await Load.find({ status: "COMPLETED" })
-      .sort({ createdAt: -1 })
-      .populate("sender")
-      .populate("winner");
+    const loads = await Load.find({ status: "COMPLETED" }).sort({ createdAt: -1 }).populate("sender").populate("winner");
 
     return res.status(200).json({
       success: true,
