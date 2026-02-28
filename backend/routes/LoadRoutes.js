@@ -13,7 +13,7 @@ router.get("/sold", getAllCompletedLoads);
 
 // Only access for admin users
 router.patch("/admin/Load-verified/:id", auth, isAdmin, verifyAndAddCommissionLoadByAdmin);
-router.get("/admin/Loads", auth, isAdmin, getAllLoadsByAdmin);
+router.get("/Loads", getAllLoadsByAdmin);
 router.delete("/admin/Loads", auth, isAdmin, deleteLoadsByAdmin);
 
 module.exports = router;

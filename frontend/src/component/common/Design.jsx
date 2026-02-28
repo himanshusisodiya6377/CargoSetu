@@ -14,7 +14,7 @@ const Title = ({ level, children, className }) => {
       ? "text-[30px] font-[600]"
       : level === 5
       ? "text-[25px] font-[600]"
-      : "text-[18px] font-[500]"
+      : "text-[15px] font-[500]"
   }`;
 
   return <Heading className={`${className} ${classes}`}>{children}</Heading>;
@@ -25,7 +25,7 @@ const Body = ({ children, className }) => {
 };
 
 const Caption = ({ children, className }) => {
-  return <p className={`${className} text-[15px] font-[500] text-gray_100`}>{children}</p>;
+  return <p className={`${className} text-[15px] font-[500] text-slate-600`}>{children}</p>;
 };
 
 const CustomNavLinkList = ({ href, className, isActive, children }) => {
@@ -80,7 +80,7 @@ const Heading = ({ title, subtitle }) => {
   return (
     <>
       <Title level={4}>{title}</Title>
-      <div className="w-1/2">
+      <div className="md:w-1/2">
         <Caption>{subtitle}</Caption>
       </div>
     </>
