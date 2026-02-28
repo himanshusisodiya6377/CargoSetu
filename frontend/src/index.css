@@ -73,3 +73,23 @@ body {
 .horiz-move {
   animation: mover-horizontal 1s infinite alternate ease-in-out;
 }
+
+@keyframes mover {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes mover-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-10px);
+  }
+}
