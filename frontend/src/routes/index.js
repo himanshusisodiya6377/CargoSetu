@@ -9,3 +9,13 @@ export {default as CategoryCards} from "../component/Cards/CategoryCards"
 export {default as TopBidder} from "../component/hero/TopBidder"
 export {default as Process} from "../component/hero/Process"
 export {default as Trust} from "../component/hero/Trust"
+
+// Auth Routes
+export { Register } from "../pages/auth/Register";
+export { Login } from "../pages/auth/Login";
+// export { LoginAsSeller } from "../pages/auth/LoginAsSeller";
+// export { UserProfile } from "../pages/auth/UserProfile";
+
+export { default as PrivateRoute } from "./PrivateRoute";
+export {default as Loader} from "../component/common/Loader"
+export {default as Dashboard} from "../pages/Dashboard"

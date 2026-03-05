@@ -76,7 +76,7 @@ const Header = () => {
                   <CustomNavLink href="/seller/login" className={`${textColor} text-sm font-medium`}> Become a Seller</CustomNavLink>
                 )}
 
-                <CustomNavLink href="/login" className={`${textColor} text-sm font-medium`}> Sign in </CustomNavLink>
+                <CustomNavLink href="/login" className={`${textColor} text-sm font-medium`}> Login </CustomNavLink>
 
                 <CustomNavLink href="/register" className={`px-6 py-2 rounded-full text-sm font-semibold leading-none flex items-center justify-center transition ${
                     isScrolled || !isHomePage
@@ -124,7 +124,7 @@ const Header = () => {
                     </CustomNavLink>
                   )}
                   <CustomNavLink href="/login" className="block text-sm font-medium" onClick={() => setIsOpen(false)}>
-                    Sign in
+                    Login
                   </CustomNavLink>
                   <CustomNavLink href="/register" className="block text-center py-2 min-w-28 rounded-full bg-white text-slate-900 text-sm font-semibold" onClick={() => setIsOpen(false)}>
                     Join
