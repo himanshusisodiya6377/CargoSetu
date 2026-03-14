@@ -10,7 +10,9 @@ const BiddingLoad = require("./models/biddingLoad");
 const biddingRoutes = require("./routes/biddingRoutes.js");
 const contactRoutes = require("./routes/contactRoutes.js");
 const { sendBidWonEmail, sendLoadAssignedEmail } = require("./services/biddingEmailService");
+const dns = require("dns");
 
+dns.setServers(["1.1.1.1","8.8.8.8"]);
 
 const app = express();
 
@@ -24,7 +26,7 @@ connectDB();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: process.env.CLIENT_URL,
     credentials: true,
   })
 );
