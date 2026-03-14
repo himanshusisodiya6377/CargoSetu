@@ -72,14 +72,14 @@ const Hero = () => {
   );
 };
 
-const Stat = ({ value, label }) => (
+const Stat = ({value, label}) => (
   <div>
     <Title level={4} className="text-white"> {value} </Title>
     <Caption className="text-slate-400">{label}</Caption>
   </div>
 );
 
-const Box = ({ title, desc }) => {
+const Box = ({title,desc}) =>{
   return (
     <div className="bg-white shadow-md rounded-xl px-3 py-2 flex items-start gap-3 max-w-xs">
       <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
@@ -93,12 +93,12 @@ const Box = ({ title, desc }) => {
   );
 };
 
-Box.propTypes = {
+Box.propTypes ={
   title: PropTypes.string,
   desc: PropTypes.string,
 };
 
-Stat.propTypes = {
+Stat.propTypes ={
   value: PropTypes.string,
   label: PropTypes.string,
 };

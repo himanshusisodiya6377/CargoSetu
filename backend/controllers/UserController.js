@@ -1,6 +1,8 @@
 const User = require("../models/User.js");
 const jwt = require("jsonwebtoken");
 const bcrypt=require("bcrypt")
+const fs = require("fs");
+const cloudinary = require("../config/cloudinary.js");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -169,9 +171,29 @@ const getUserBalance = async (req, res) => {
   });
 };
 
+const getUserProfile = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    return res.status(401).json({ message: "Invalid token" });
+  }
+};
+
 // Only for admin users
 const getAllUser = async (req, res) => {
   const userList = await User.find({});
+  // console.log(userList)
 
   if (!userList.length) {
     return res.status(404).json({ message: "No user found" });
@@ -194,4 +216,61 @@ const estimateIncome = async (req, res) => {
   }
 };
 
-module.exports = { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserBalance ,getAllUser,estimateIncome};
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const { name, phone } = req.body;
+
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+
+    // Handle photo upload
+    if (req.file) {
+      // Delete old photo from cloudinary if it exists and is not the default
+      if (user.photo && user.photoPublicId) {
+        await cloudinary.uploader.destroy(user.photoPublicId);
+      }
+
+      const uploaded = await cloudinary.uploader.upload(req.file.path, {
+        folder: "CargoSetu/Profiles",
+      });
+
+      fs.unlinkSync(req.file.path); // remove temp file
+
+      user.photo = uploaded.secure_url;
+      user.photoPublicId = uploaded.public_id;
+    }
+
+    const updated = await user.save();
+    const { _id, name: n, email, photo, role, phone: ph } = updated;
+
+    return res.status(200).json({ _id, name: n, email, photo, role, phone: ph });
+  } catch (error) {
+    if (req.file?.path) fs.unlinkSync(req.file.path); // cleanup on error
+    return res.status(500).json({ message: "Failed to update profile", error: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (req.user._id.toString() === id) {
+      return res.status(400).json({ message: "You cannot delete your own account" });
+    }
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.photo && user.photoPublicId) {
+      await cloudinary.uploader.destroy(user.photoPublicId);
+    }
+
+    await user.deleteOne();
+    return res.status(200).json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to delete user", error: error.message });
+  }
+};
+
+module.exports = { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserBalance,getUserProfile ,getAllUser,estimateIncome,updateUserProfile,deleteUser};

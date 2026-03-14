@@ -18,4 +18,13 @@ export { Login } from "../pages/auth/Login";
 
 export { default as PrivateRoute } from "./PrivateRoute";
 export {default as Loader} from "../component/common/Loader"
-export {default as Dashboard} from "../pages/Dashboard"
+// export {default as Dashboard} from "../pages/Dashboard/Dashboard"
+export {default as DashboardLayout} from "../component/common/layout/DashboardLayout"
+export {default as UserProfile} from "../pages/auth/UserProfile"
+// export {default as ShowOnLogin} from "../utils/HiddenLink"
+// export {default as ShowOnLogout} from "../utils/HiddenLink"
+export {default as Income} from "../admin/Income"
+export {default as userList} from "../admin/UserList"
+
+export {default as AddProduct} from "../pages/product/AddLoad"
+export {default as LoadList} from "../pages/product/loadList/loadList"
