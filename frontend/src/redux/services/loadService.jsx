@@ -1,0 +1,156 @@
+import axios from "axios";
+import { BACKEND_URL } from "../../utils/url";
+
+export const LOAD_URL = `${BACKEND_URL}/Loads/`;
+
+const createLoad = async (formData) =>{
+  const response = await axios.post(LOAD_URL, formData, {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+const getLoads = async () =>{
+  const response = await axios.get(LOAD_URL, {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+const getUserLoads = async () =>{
+  const response = await axios.get(`${LOAD_URL}user`, {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+export const getLoad = async (id) =>{
+
+  const response = await axios.get(
+    `${LOAD_URL}${id}`,
+    { withCredentials: true }
+  );
+
+  return response.data;
+
+};
+
+const updateLoad = async (id, formData) =>{
+
+  const response = await axios.patch(
+    `${LOAD_URL}${id}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      withCredentials: true,
+    }
+  );
+
+  return response.data;
+
+};
+
+const deleteLoad = async (id) =>{
+  const response = await axios.delete(`${LOAD_URL}${id}`, {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+const placeBid = async (id, amount) =>{
+  const response = await axios.post(
+    `${BACKEND_URL}/bidding/`,
+    { loadId: id, amount },
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+const sellLoad = async (loadId) =>{
+  const response = await axios.post(
+    "http://localhost:5000/api/bidding/sell",
+    { loadId },
+    { withCredentials: true }
+  );
+
+  return response.data;
+};
+
+const getWonBids = async () =>{
+  const response = await axios.get(
+    "http://localhost:5000/api/bidding/won",
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+const updateTracking = async (loadId, status) =>{
+  const response = await axios.patch(
+    "http://localhost:5000/api/bidding/track",
+    { loadId, status },
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+const getActiveLoads = async (coords) =>{
+  const params = coords ? { lat: coords.lat, lng: coords.lng } : {};
+  const response = await axios.get(`${LOAD_URL}active`, {
+    params,
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+const getCompletedLoads = async () =>{
+  const response = await axios.get(`${LOAD_URL}completed`, { withCredentials: true });
+  return response.data;
+};
+
+const BIDDING_URL = `${BACKEND_URL}/bidding/`;
+
+const getMyBids = async () =>{
+  const response = await axios.get(`${BIDDING_URL}my-bids`, { withCredentials: true });
+  return response.data;
+};
+
+const updateBid = async (id, amount) =>{
+  const response = await axios.patch(`${BIDDING_URL}${id}`, { amount }, { withCredentials: true });
+  return response.data;
+};
+
+const deleteBid = async (id) =>{
+  const response = await axios.delete(`${BIDDING_URL}${id}`, { withCredentials: true });
+  return response.data;
+};
+
+const getAllLoadsAdmin = async () =>{
+  const response = await axios.get(`${LOAD_URL}admin/all`, { withCredentials: true });
+  return response.data;
+};
+
+const deleteLoadByAdmin = async (id) =>{
+  const response = await axios.delete(`${LOAD_URL}admin/${id}`, { withCredentials: true });
+  return response.data;
+};
+
+const verifyLoad = async (id, commission) =>{
+  const response = await axios.patch(`${LOAD_URL}admin/Load-verified/${id}`, { commission }, { withCredentials: true });
+  return response.data;
+};
+
+const deleteBidByAdmin = async (id) =>{
+  const response = await axios.delete(`${BIDDING_URL}admin/${id}`, { withCredentials: true });
+  return response.data;
+};
+
+const getLoadBids = async (loadId) =>{
+  const response = await axios.get(`${BIDDING_URL}${loadId}`, { withCredentials: true });
+  return response.data;
+};
+
+const loadService = {createLoad,getLoads,getUserLoads,getLoad,updateLoad,deleteLoad,placeBid,sellLoad, getWonBids, updateTracking, getActiveLoads, getCompletedLoads,getMyBids, updateBid, deleteBid,getAllLoadsAdmin, deleteLoadByAdmin, verifyLoad, deleteBidByAdmin, getLoadBids};
+
+export default loadService;

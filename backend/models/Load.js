@@ -12,6 +12,10 @@ const loadSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    maxBudget: {
+      type: Number,
+      required: true
+   },
     images: [
       {
         url: String,
@@ -67,9 +71,16 @@ const loadSchema = mongoose.Schema(
         bidTime: { type: Date, default: Date.now },
       },
     ],
-    lowestBid: {
-      amount: Number,
-      driver: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+     lowestBid: {
+      driver: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      amount: {
+        type: Number,
+        default: null,
+      },
+      bidTime: Date,
     },
     assignedDriver: {
       type: mongoose.Schema.Types.ObjectId,

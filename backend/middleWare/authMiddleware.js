@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User.js");
 
-const auth = async (req, res, next) => {
+const auth = async (req, res, next) =>{
   try {
     const token = req.cookies.token;
     if (!token) {
@@ -36,8 +36,18 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-const isSender = (req, res, next) => {
-  if (req.user && (req.user.role === "Sender" || req.user.role === "Admin")) {
+const isDriver = (req, res, next) =>{
+  if (req.user && req.user.role === "Driver") {
+    next();
+  } else {
+    return res.status(403).json({
+        message:"Access denied. You are not an admin",
+    });
+  }
+};
+
+const isSender = (req, res, next) =>{
+  if(req.user && req.user.role === "Sender"){
     next();
   } else {
     return res.status(403).json({
@@ -46,4 +56,4 @@ const isSender = (req, res, next) => {
   }
 };
 
-module.exports = { auth, isAdmin, isSender };
+module.exports = { auth, isAdmin, isSender,isDriver };

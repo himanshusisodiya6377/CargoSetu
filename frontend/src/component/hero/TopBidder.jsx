@@ -1,5 +1,5 @@
 import { Caption, Container, Heading, ProfileCard, Title } from "../../routes/index";
-import { topDriversList } from "../../utils/data";
+import { topDriversList } from "../../utils/data.jsx";
 
 const TopDrivers = () => {
   return (

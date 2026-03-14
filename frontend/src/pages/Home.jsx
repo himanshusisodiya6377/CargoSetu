@@ -1,6 +1,6 @@
 import { CategorySlider, Hero, Process, TopBidder ,Trust } from "../routes";
 
-const Home = () => {
+const Home = () =>{
   return (
     <div>
       <Hero/>

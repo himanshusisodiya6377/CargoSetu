@@ -1,9 +1,9 @@
 const Load = require("../models/Load");
 const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
-const {sendBidWonEmail,sendLoadAssignedEmail} = require("../services/biddingEmailService");
+const {sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
 
-const getBiddingHistory = async (req, res) => {
+const getBiddingHistory = async(req, res) =>{
   try {
     const { loadId } = req.params;
     // console.log(loadId)
@@ -29,175 +29,325 @@ const getBiddingHistory = async (req, res) => {
   }
 };
 
-const placeBid = async (req, res) => {
+const placeBid =async(req,res) =>{
   try {
-    const { loadId, amount } = req.body;
+    const {loadId,amount} = req.body;
     const driverId = req.user._id;
 
-    // console.log(loadId, amount);
-
-    if (!loadId || !amount) {
+    if(!loadId || !amount){
       return res.status(400).json({
+        success: false,
         message: "Load ID and bid amount are required",
-      });
-    }
+      })}
 
     const load = await Load.findById(loadId);
 
-    if (!load) {
+    if(!load){
       return res.status(404).json({
+        success: false,
         message: "Load not found",
-      });
-    }
+      })}
 
-    if (!load.isVerified) {
+    // load verification
+    if(!load.isVerified){
       return res.status(400).json({
+        success: false,
         message: "Load is not verified for bidding",
-      });
-    }
+      })}
 
-    if (load.status !== "OPEN") {
+    // load status
+    if(load.status!=="OPEN"){
       return res.status(400).json({
+        success: false,
         message: "Bidding is closed for this load",
-      });
-    }
+      })}
 
     const now = new Date();
+
+    // bidding time window
     if (now < load.bidStartTime || now > load.bidEndTime) {
       return res.status(400).json({
+        success: false,
         message: "Bidding time window is closed",
-      });
-    }
+      })}
 
-    const lowestBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).lean();
+    // check current lowest bid
+    const lowestBid = await BiddingLoad.findOne({load: loadId}).sort({amount: 1});
 
-    if (lowestBid && amount >= lowestBid.amount) {
+    if(lowestBid && amount >= lowestBid.amount){
       return res.status(400).json({
-        message: "Your bid must be lower than current lowest bid",
-      });
-    }
+        success: false,
+        message: "Your bid must be lower than the current lowest bid",
+      })}
 
+    // create new bid
     const bid = await BiddingLoad.create({
       load: loadId,
       driver: driverId,
       amount,
     });
 
+    // push bid into load
+    await Load.findByIdAndUpdate(loadId,{
+      $push: { bids: bid._id },
+      $set: {
+        lowestBid: {
+          amount: amount,
+          driver: driverId
+        }
+      }
+});
+
     return res.status(201).json({
       success: true,
       message: "Bid placed successfully",
-      data: bid,
+      bid,
     });
-  } catch (error) {
+
+  } catch (error){
     return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-const finalizeLoad = async (req, res) => {
+const finalizeLoad = async (req, res)=>{
+  const { loadId } = req.body;
+  const senderId = req.user._id;
+
+   const load = await Load.findOne({_id:loadId,sender:senderId}).populate("sender", "name email");
+
+  if(!load) return res.status(404).json({message: "Load not found"});
+
+  if(load.status === "ASSIGNED")
+      return res.status(400).json({message: "Load already closed"});
+  
+   if(new Date() < new Date(load.bidEndTime)){
+      return res.status(400).json({
+        message: "Bidding is still active. You can assign only after the bid window ends.",
+      })}
+
+  const winningBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).populate("driver","name email");
+
+  if(!winningBid) return res.status(400).json({ message: "No bids found" });
+
+  // commission
+  const commissionAmount =(load.adminCommission/100) * winningBid.amount;
+
+  const finalAmount = winningBid.amount - commissionAmount;
+
+  load.status = "ASSIGNED";
+  load.assignedDriver = winningBid.driver._id;
+  load.finalAmount = finalAmount;
+
+  await load.save();
+
+  await BiddingLoad.updateMany(
+      {load: loadId, _id:{ $ne: winningBid._id }},
+      {status: "LOST"}
+  );
+
+  winningBid.status = "WON";
+  await winningBid.save();
+  
+   try {
+      await sendBidWonEmail({
+        driver: winningBid.driver,
+        load,
+        finalAmount,
+      });
+      await sendLoadAssignedEmail({
+        sender: load.sender,
+        driver: winningBid.driver,
+        load,
+        finalAmount,
+      });
+    } catch (emailErr) {
+      console.error("Email sending failed:", emailErr.message);
+    }
+
+
+  return res.status(200).json({
+      success: true,
+      message: "Load assigned successfully",
+      data: load,
+    });
+};
+
+const getWinningBids = async (req, res)=>{
   try {
-    const { loadId } = req.body;
-    const senderId = req.user._id;
+    const user = req.user;
+    let winningBids;
 
-    if (!loadId) {
+    if (user.role === "Driver") {
+      winningBids = await BiddingLoad.find({driver: user._id, status: "WON"}).populate({
+          path: "load",
+          populate: {path: "sender", select: "name email phone photo"},
+        }).populate("driver", "name email phone photo vehicleType licenseNumber rating jobsCompleted").sort({ updatedAt: -1 });
+      
+        winningBids = winningBids.filter((b) => b.load?.status !== "DELIVERED");
+
+    }else if(user.role === "Sender"){
+      const assignedLoads = await Load.find({sender: user._id, status: { $in:["ASSIGNED", "IN_TRANSIT"]}});
+      const loadIds = assignedLoads.map((l) => l._id);
+
+      winningBids = await BiddingLoad.find({load: { $in: loadIds }, status: "WON"}).populate("load").populate("driver", "name email phone photo vehicleType licenseNumber rating jobsCompleted").sort({updatedAt: -1});
+    } else {
+      return res.status(403).json({message: "Access denied"});
+    }
+
+    return res.status(200).json({ success: true, data: winningBids });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to fetch winning bids", error: error.message });
+  }
+};
+
+const updateTrackingStatus = async (req, res)=>{
+  try {
+    const {loadId, status} = req.body;
+    const driverId = req.user._id;
+
+    const validTransitions = {ASSIGNED: "IN_TRANSIT", IN_TRANSIT: "DELIVERED"};
+
+    if (!["IN_TRANSIT", "DELIVERED"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const load = await Load.findOne({_id: loadId, assignedDriver: driverId}).populate("sender", "name email");
+
+    if(!load){
+      return res.status(404).json({ message: "Load not found or not your assigned load"});
+    }
+
+    if(load.status === "DELIVERED"){
+      return res.status(400).json({ message: "Load already delivered"});
+    }
+
+    if(validTransitions[load.status] !== status) {
       return res.status(400).json({
-        message: "Load ID is required",
+        message: `Cannot move from ${load.status} to ${status}`,
       });
     }
 
-    const load = await Load.findById(loadId).populate("sender");
-    if (!load) {
-      return res.status(404).json({
-        message: "Load not found",
-      });
+    load.status = status;
+    if(status === "DELIVERED"){
+      load.deliveryDate = new Date();
     }
-
-    if (load.sender._id.toString() !== senderId.toString()) {
-      return res.status(403).json({
-        message: "You are not authorized to finalize this load",
-      });
-    }
-
-    if (load.status !== "OPEN") {
-      return res.status(400).json({
-        message: "Load is already closed",
-      });
-    }
-
-    const winningBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).populate("driver");
-
-    if (!winningBid) {
-      return res.status(400).json({
-        message: "No bids found for this load",
-      });
-    }
-
-    const commissionPercent = load.adminCommission || 0;
-    const commissionAmount =(commissionPercent / 100) * winningBid.amount;
-
-    const finalAmount = winningBid.amount - commissionAmount;
-
-    load.status = "ASSIGNED";
-    load.winningDriver = winningBid.driver._id;
-    load.finalAmount = finalAmount;
     await load.save();
 
-    await BiddingLoad.updateMany(
-      { load: loadId },
-      { status: "LOST" }
-    );
-
-    winningBid.status = "WON";
-    await winningBid.save();
-
-    const admin = await User.findOne({ role: "Admin" });
-    if (admin) {
-      admin.commissionBalance += commissionAmount;
-      await admin.save();
+    if(status === "DELIVERED"){
+      // Credit admin commission wallet
+      if (load.adminCommission > 0) {
+        const winningBid = await BiddingLoad.findOne({load: load._id, status: "WON"});
+        if (winningBid){
+          const commissionAmount = (load.adminCommission / 100) * winningBid.amount;
+          await User.updateOne({ role: "Admin" }, { $inc: { commissionBalance: commissionAmount } });
+        }
+      }
+      try{
+        await sendDeliveryConfirmationEmail({sender: load.sender, load});
+      } catch (err) {
+        console.error("Delivery email failed:", err.message);
+      }
     }
 
-    const driver = await User.findById(winningBid.driver._id);
-    if (driver) {
-      driver.balance += finalAmount;
-      driver.jobsCompleted += 1;
-      await driver.save();
-    }
-
-    // console.log("Finalizing load, sending emails");
-    // console.log("Driver email:", winningBid.driver.email);
-    // console.log("Sender email:", load.sender.email);
-
-
-     await sendBidWonEmail({
-      driver: winningBid.driver,
-      load,
-      finalAmount,
-     });
-
-     await sendLoadAssignedEmail({
-      sender: load.sender,
-      driver: winningBid.driver,
-      load,
-      finalAmount,
-      });
-
-    return res.status(200).json({
-      success: true,
-      message: "Load finalized successfully",
-      data: {
-        loadId: load._id,
-        winningDriver: winningBid.driver.name,
-        bidAmount: winningBid.amount,
-        commissionAmount,
-        finalAmount,
-      },
-    });
+    return res.status(200).json({ success: true, message: `Status updated to ${status}`, data: load });
   } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: "Failed to update tracking", error: error.message });
   }
 };
 
-module.exports = {placeBid,getBiddingHistory,finalizeLoad};
+const getMyBids = async (req, res)=>{
+  try {
+    const bids = await BiddingLoad.find({driver: req.user._id}).populate("load", "title pickupLocation dropLocation status bidEndTime isVerified").sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, data: bids });
+  } catch (error){
+    return res.status(500).json({ message: "Failed to fetch your bids", error: error.message });
+  }
+};
+
+// UPDATE A BID (only if load is still OPEN and bid belongs to this driver)
+const updateBid = async (req, res)=>{
+  try {
+    const {amount} = req.body;
+    const bid = await BiddingLoad.findById(req.params.id);
+    if (!bid) return res.status(404).json({message: "Bid not found"});
+    if (bid.driver.toString() !== req.user._id.toString())
+      return res.status(403).json({message: "Not your bid"});
+
+    const load = await Load.findById(bid.load);
+    if (!load || load.status !== "OPEN")
+      return res.status(400).json({ message: "Bidding is closed for this load"});
+    if (new Date() > new Date(load.bidEndTime))
+      return res.status(400).json({ message: "Bid window has ended"});
+
+    const lowest = await BiddingLoad.findOne({load: bid.load, _id: {$ne: bid._id}}).sort({amount: 1});
+    if (lowest && amount >= lowest.amount)
+      return res.status(400).json({message: `Your bid must be lower than ₹${lowest.amount}`});
+
+    bid.amount = amount;
+    await bid.save();
+
+    const newLowest = await BiddingLoad.findOne({load: bid.load }).sort({amount: 1});
+    await Load.findByIdAndUpdate(bid.load, {
+      $set: {lowestBid: { amount: newLowest.amount, driver: newLowest.driver}},
+    });
+
+    return res.status(200).json({ success: true, message: "Bid updated", data: bid });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// DELETE A BID (only if load is still OPEN)
+const deleteBid = async (req, res)=>{
+  try {
+    const bid = await BiddingLoad.findById(req.params.id);
+    if(!bid) return res.status(404).json({message: "Bid not found"});
+    if(bid.driver.toString() !== req.user._id.toString())
+      return res.status(403).json({message: "Not your bid"});
+
+    const load = await Load.findById(bid.load);
+    if(!load || load.status !== "OPEN")
+      return res.status(400).json({ message: "Cannot withdraw bid after load is assigned" });
+    if(new Date() > new Date(load.bidEndTime))
+      return res.status(400).json({ message: "Bid window has ended" });
+
+    await bid.deleteOne();
+    await Load.findByIdAndUpdate(bid.load,{$pull: { bids: bid._id}});
+
+    // Recalculate lowestBid
+    const newLowest = await BiddingLoad.findOne({load: bid.load}).sort({amount: 1});
+    await Load.findByIdAndUpdate(bid.load,{
+      $set: {lowestBid: newLowest ? {amount: newLowest.amount,driver: newLowest.driver} : {amount: null, driver: null } },
+    });
+
+    return res.status(200).json({ success: true, message: "Bid withdrawn" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ADMIN: DELETE ANY BID
+const deleteBidByAdmin = async (req, res)=>{
+  try {
+    const bid = await BiddingLoad.findById(req.params.id);
+    if (!bid) return res.status(404).json({message: "Bid not found"});
+
+    const loadId = bid.load;
+    await bid.deleteOne();
+    await Load.findByIdAndUpdate(loadId,{$pull: {bids: bid._id}});
+
+    const newLowest = await BiddingLoad.findOne({load:loadId}).sort({amount: 1});
+    await Load.findByIdAndUpdate(loadId,{
+      $set:{lowestBid: newLowest ? {amount: newLowest.amount,driver: newLowest.driver} : {amount:null, driver: null}},
+    });
+
+    return res.status(200).json({ success: true, message: "Bid deleted by admin" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {placeBid, getBiddingHistory, finalizeLoad, getWinningBids, updateTrackingStatus, getMyBids, updateBid, deleteBid, deleteBidByAdmin};
