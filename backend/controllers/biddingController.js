@@ -1,7 +1,7 @@
 const Load = require("../models/Load");
 const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
-const {sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
+const {sendBidPlacedEmail, sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
 
 const getBiddingHistory = async(req, res) =>{
   try {
@@ -48,13 +48,6 @@ const placeBid =async(req,res) =>{
         message: "Load not found",
       })}
 
-    // load verification
-    if(!load.isVerified){
-      return res.status(400).json({
-        success: false,
-        message: "Load is not verified for bidding",
-      })}
-
     // load status
     if(load.status!=="OPEN"){
       return res.status(400).json({
@@ -98,6 +91,21 @@ const placeBid =async(req,res) =>{
       }
 });
 
+    // Send confirmation email to driver
+    try {
+      const driver = await User.findById(driverId);
+      if (driver) {
+        await sendBidPlacedEmail({
+          driver,
+          load,
+          bidAmount: amount
+        });
+      }
+    } catch (emailErr) {
+      console.error("Failed to send bid placed email:", emailErr.message);
+      // Don't fail the bid placement if email fails
+    }
+
     return res.status(201).json({
       success: true,
       message: "Bid placed successfully",
@@ -128,12 +136,15 @@ const finalizeLoad = async (req, res)=>{
         message: "Bidding is still active. You can assign only after the bid window ends.",
       })}
 
-  const winningBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).populate("driver","name email");
+  const winningBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).populate("driver","name email phone");
 
   if(!winningBid) return res.status(400).json({ message: "No bids found" });
 
+  console.log("Winning Bid Driver:", winningBid.driver);
+  console.log("Load Sender:", load.sender);
+
   // commission
-  const commissionAmount =(load.adminCommission/100) * winningBid.amount;
+  const commissionAmount =(load.adminCommission || 0)/100 * winningBid.amount;
 
   const finalAmount = winningBid.amount - commissionAmount;
 
@@ -152,6 +163,10 @@ const finalizeLoad = async (req, res)=>{
   await winningBid.save();
   
    try {
+      console.log("Sending emails...");
+      console.log("Driver details:", { name: winningBid.driver?.name, email: winningBid.driver?.email });
+      console.log("Sender details:", { name: load.sender?.name, email: load.sender?.email });
+      
       await sendBidWonEmail({
         driver: winningBid.driver,
         load,
@@ -165,6 +180,7 @@ const finalizeLoad = async (req, res)=>{
       });
     } catch (emailErr) {
       console.error("Email sending failed:", emailErr.message);
+      console.error("Stack:", emailErr.stack);
     }
 
 

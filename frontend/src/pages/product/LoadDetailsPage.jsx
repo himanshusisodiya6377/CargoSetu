@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import { getLoad, getLoads, placeBidAndRefresh, sellLoad, updateTracking } from "../../redux/features/loadSlice";
 import { toast } from "react-toastify";
 import { FiPackage, FiTruck, FiCheckCircle } from "react-icons/fi";
+import { BACKEND_URL } from "../../utils/url";
 
 const STEPS = [
   { key: "ASSIGNED",   label: "Assigned",   Icon: FiPackage },
@@ -16,19 +17,29 @@ const STEPS = [
 const TrackingBar = ({status}) =>{
   const current = STEPS.findIndex((s) => s.key === status);
   return (
-    <div className="flex items-center w-full">
+    <div className="flex items-center w-full gap-2">
       {STEPS.map(({ key, label, Icon }, i)=>(
         <div key={key} className="flex items-center flex-1 last:flex-none">
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2 flex-1">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${ i < current  ? "bg-green-500 border-green-500 text-white" : i === current ? "bg-white border-green-500 text-green-600" : "bg-gray-50 border-gray-200 text-gray-300" }`}>
-              <Icon size={18} />
+              className={`w-12 h-12 rounded-full flex items-center justify-center border-3 transition-all font-semibold ${
+                i < current  
+                  ? "bg-green-500 border-green-500 text-white shadow-md" 
+                  : i === current 
+                  ? "bg-blue-500 border-blue-600 text-white shadow-lg animate-pulse" 
+                  : "bg-gray-100 border-gray-300 text-gray-400"
+              }`}>
+              <Icon size={20} />
             </div>
-            <span className={`text-xs font-medium whitespace-nowrap ${i <= current ? "text-green-600" : "text-gray-400"}`}>{label}</span>
+            <span className={`text-xs font-semibold whitespace-nowrap transition-all ${
+              i <= current ? "text-green-600" : "text-gray-400"
+            }`}>{label}</span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`flex-1 h-0.5 mx-2 mb-4 rounded transition-all ${
-              i < current ? "bg-green-500" : "bg-gray-200"}`}/>)}
+            <div className={`flex-1 h-1 mx-1 rounded-full transition-all ${
+              i < current ? "bg-green-500" : i === current ? "bg-blue-500" : "bg-gray-300"
+            }`}/>
+          )}
         </div>
       ))}
     </div>
@@ -57,7 +68,7 @@ export const LoadDetailsPage = () =>{
 
   const fetchBids = async () =>{
     try {
-      const response = await fetch(`http://localhost:5000/api/bidding/${id}`,{
+      const response = await fetch(`${BACKEND_URL}/bidding/${id}`,{
         credentials: "include",
       });
       const data = await response.json();
@@ -140,8 +151,10 @@ export const LoadDetailsPage = () =>{
     if(result.meta.requestStatus === "fulfilled"){
       toast.success("Bid placed successfully!");
       setBidAmount("");
-      fetchBids();         
-      dispatch(getLoads()); 
+      // Refresh all data
+      await fetchBids();
+      dispatch(getLoad(id));
+      dispatch(getLoads());
     }else{
       toast.error(result.payload || "Failed to place bid. Try again.");
     }
@@ -237,34 +250,33 @@ export const LoadDetailsPage = () =>{
 
             {user?.role === "Driver" && load?.status === "OPEN" && !timeLeft.ended && (
               <div className="mt-6 p-6 bg-gray-50 border rounded-lg">
-                {!load?.isVerified ? (
-                  <Caption className="text-red-500 font-medium">
-                    ⚠ This load is not yet verified by admin. Bidding will open once verified.
+                {!load?.isVerified && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <Caption className="text-yellow-700 font-medium text-sm">
+                      ℹ This load is not yet verified by admin, but you can still place a bid.
+                    </Caption>
+                  </div>
+                )}
+                <Caption className="text-gray-600 font-medium mb-3">Place Your Bid</Caption>
+                <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleBidSubmit}>
+                  <input
+                    className={commonClassNameOfInput}
+                    type="number"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    placeholder={lowestBid ? `Must be below ₹${lowestBid}` : "Enter your bid amount"}
+                    min="1"
+                    step="100"
+                    disabled={isLoadingBid}
+                  />
+                  <button type="submit" disabled={isLoadingBid} className="bg-green text-white px-6 py-3 rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                    {isLoadingBid ? "Placing..." : "Submit Bid"}
+                  </button>
+                </form>
+                {lowestBid && (
+                  <Caption className="text-gray-500 mt-2">
+                    Current lowest bid: ₹{lowestBid} — bid lower to compete
                   </Caption>
-                ) : (
-                  <>
-                    <Caption className="text-gray-600 font-medium mb-3">Place Your Bid</Caption>
-                    <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleBidSubmit}>
-                      <input
-                        className={commonClassNameOfInput}
-                        type="number"
-                        value={bidAmount}
-                        onChange={(e) => setBidAmount(e.target.value)}
-                        placeholder={lowestBid ? `Must be below ₹${lowestBid}` : "Enter your bid amount"}
-                        min="1"
-                        step="100"
-                        disabled={isLoadingBid}
-                      />
-                      <button type="submit" disabled={isLoadingBid} className="bg-green text-white px-6 py-3 rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                        {isLoadingBid ? "Placing..." : "Submit Bid"}
-                      </button>
-                    </form>
-                    {lowestBid && (
-                      <Caption className="text-gray-500 mt-2">
-                        Current lowest bid: ₹{lowestBid} — bid lower to compete
-                      </Caption>
-                    )}
-                  </>
                 )}
               </div>
             )}
@@ -278,32 +290,59 @@ export const LoadDetailsPage = () =>{
             )}
     
             {["ASSIGNED", "IN_TRANSIT", "DELIVERED"].includes(load?.status) && (
-              <div className="mt-6 bg-gray-50 border border-gray-100 rounded-xl p-5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Delivery Tracking</p>
-                <TrackingBar status={load.status} />
+              <div className="mt-8 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">📍 Delivery Tracking</p>
+                    <p className="text-sm text-gray-600">Track your shipment progress in real-time</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-blue-600">{load?.status === "DELIVERED" ? "✓" : load?.status === "IN_TRANSIT" ? "🚚" : "📦"}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 mb-6">
+                  <TrackingBar status={load.status} />
+                </div>
+
                 {user?.role === "Driver" && String(load?.assignedDriver) === String(user?._id) && (
-                  <div className="mt-5 flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     {load.status === "ASSIGNED" && (
-                      <button onClick={() => handleTrackingUpdate(load._id, "IN_TRANSIT")} className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-5 py-2 rounded-lg transition">
+                      <button 
+                        onClick={() => handleTrackingUpdate(load._id, "IN_TRANSIT")} 
+                        className="flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105"
+                      >
                         🚚 Start Transit
                       </button>
                     )}
                     {load.status === "IN_TRANSIT" && (
-                      <button onClick={() => handleTrackingUpdate(load._id, "DELIVERED")} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition">
+                      <button 
+                        onClick={() => handleTrackingUpdate(load._id, "DELIVERED")} 
+                        className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105"
+                      >
                         ✅ Mark as Delivered
                       </button>
                     )}
                     {load.status === "DELIVERED" && (
-                      <span className="text-green-600 font-semibold text-sm">✔ Successfully Delivered</span>
+                      <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md">
+                        <FiCheckCircle size={20} />
+                        Successfully Delivered
+                      </div>
                     )}
                   </div>
                 )}
 
                 {user?.role === "Sender" && load.status === "DELIVERED" && (
-                  <p className="mt-4 text-green-600 font-semibold text-sm">
-                    ✔ Your load has been delivered!
-                  </p>
+                  <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md">
+                    <FiCheckCircle size={20} />
+                    Your load has been delivered!
+                  </div>
                 )}
+
+                <div className="mt-4 text-xs text-gray-600 bg-white rounded p-3">
+                  <strong>Status:</strong> {load?.status?.replace(/_/g, " ")} 
+                  {load?.deliveryDate && <> • Delivered: {new Date(load.deliveryDate).toLocaleDateString()}</>}
+                </div>
               </div>
             )}
           </div>

@@ -7,7 +7,7 @@ import { Container, Title, Body, Caption, Loader } from "../../routes/index";
 
 const initialState = { email: "", password: "" };
 
-export const LoginAsSeller = () => {
+export const LoginAsSender = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formData, setFormData] = useState(initialState);
@@ -19,6 +19,7 @@ export const LoginAsSeller = () => {
     e.preventDefault();
     const { email, password } = formData;
     if (!email || !password) return toast.error("All fields are required");
+    // Use loginUserAsSeller which calls the /sender endpoint
     dispatch(loginUserAsSeller({ email, password }));
   };
 
@@ -39,12 +40,12 @@ export const LoginAsSeller = () => {
       <div>
         <section className="bg-slate-900 pt-24 pb-16">
           <Container className="text-center text-white">
-            <Caption className="text-green-400 uppercase tracking-widest mb-3">Seller Portal</Caption>
+            <Caption className="text-green-400 uppercase tracking-widest mb-3">Sender Portal</Caption>
             <Title level={3} className="text-white text-3xl sm:text-4xl leading-tight">
-              Login as <span className="text-yellow-300">Seller</span>
+              Login as <span className="text-yellow-300">Sender</span>
             </Title>
             <Body className="text-slate-400 mt-4 max-w-sm mx-auto">
-              Access your seller dashboard to manage loads, track shipments, and grow your business with CargoSetu.
+              Access your sender dashboard to post loads, track shipments, and manage your freight with CargoSetu.
             </Body>
           </Container>
         </section>
@@ -66,11 +67,11 @@ export const LoginAsSeller = () => {
                 </div>
 
                 <button type="submit" disabled={isLoading} className={btn}>
-                  {isLoading ? "Logging in..." : "Login as Seller"}
+                  {isLoading ? "Logging in..." : "Login as Sender"}
                 </button>
 
                 <p className="text-center text-sm text-slate-400">
-                  Don&apos;t have a seller account?{" "}
+                  Don&apos;t have a sender account?{" "}
                   <NavLink to="/register" className="text-green font-medium hover:underline">Sign up</NavLink>
                 </p>
               </form>

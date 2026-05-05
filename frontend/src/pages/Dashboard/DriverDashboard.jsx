@@ -68,9 +68,8 @@ export const DriverDashboard = ()=>{
         <p className="text-gray_100 text-sm mt-1">Here's a summary of your activity.</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        {[{ icon: BsCashCoin,label: "Wallet Balance",value: `₹${balance}`, href: null },
-          { icon: MdOutlineGavel,label: "Bids Placed",value: stats.bidsPlaced,href: "/my-bids" },
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[{ icon: MdOutlineGavel,label: "Bids Placed",value: stats.bidsPlaced,href: "/my-bids" },
           { icon: TbGavel,label: "Loads Won",value: stats.won,href: "/winning-products" },
           { icon: TbTruckDelivery, label: "In Transit",value: stats.inTransit,href: null },
           { icon: FiCheckCircle,label: "Delivered",value: stats.delivered,href: "/completed-loads" },

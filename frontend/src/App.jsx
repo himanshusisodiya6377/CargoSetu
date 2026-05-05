@@ -7,7 +7,7 @@ import { ToastContainer } from "react-toastify";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { getLogInStatus} from "./redux/features/authSlice";
-import { LoginAsSeller } from "./pages/auth/LoginAsSeller";
+import { LoginAsSender } from "./pages/auth/LoginAsSender";
 import UserList from "./admin/UserList";
 import AddLoad from "./pages/product/AddLoad";
 import { LoadEdit } from "./pages/product/LoadEdit";
@@ -104,13 +104,11 @@ function App() {
             }
           />
           <Route
-            path="/seller/login"
+            path="/sender/login"
             element={
-              <PrivateRoute>
-                <Layout>
-                  <LoginAsSeller />
-                </Layout>
-              </PrivateRoute>
+              <Layout>
+                <LoginAsSender />
+              </Layout>
             }
           />
           <Route

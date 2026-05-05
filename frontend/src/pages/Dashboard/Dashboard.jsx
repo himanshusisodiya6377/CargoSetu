@@ -52,9 +52,8 @@ export const Dashboard = () =>{
         <p className="text-gray_100 text-sm mt-1">Here's a summary of your activity.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[{ icon: BsCashCoin, label: "Wallet Balance", value: `₹${balance}` },
-          { icon: FiPackage,label: "Total Loads",value: stats.total },
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {[{ icon: FiPackage,label: "Total Loads",value: stats.total },
           { icon: TbGavel,label: "Total Bids Received", value: stats.totalBids },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="shadow-s1 p-6 rounded-lg flex items-center gap-4">

@@ -70,7 +70,7 @@ const placeBid = async (id, amount) =>{
 
 const sellLoad = async (loadId) =>{
   const response = await axios.post(
-    "http://localhost:5000/api/bidding/sell",
+    `${BACKEND_URL}/bidding/sell`,
     { loadId },
     { withCredentials: true }
   );
@@ -80,7 +80,7 @@ const sellLoad = async (loadId) =>{
 
 const getWonBids = async () =>{
   const response = await axios.get(
-    "http://localhost:5000/api/bidding/won",
+    `${BACKEND_URL}/bidding/won`,
     { withCredentials: true }
   );
   return response.data;
@@ -88,7 +88,7 @@ const getWonBids = async () =>{
 
 const updateTracking = async (loadId, status) =>{
   const response = await axios.patch(
-    "http://localhost:5000/api/bidding/track",
+    `${BACKEND_URL}/bidding/track`,
     { loadId, status },
     { withCredentials: true }
   );

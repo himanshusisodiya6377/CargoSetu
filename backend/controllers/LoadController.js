@@ -410,8 +410,8 @@ const getActiveLoads = async(req, res)=>{
       //Sender sees their own loads that are open for bidding
       loads = await Load.find({sender: userId, status: {$in: ["OPEN", "BIDDING"] },isVerified: true}).sort({ bidEndTime: 1});
     }else if(role === "Driver"){
-      // Driver sees all verified loads open for bidding
-      loads = await Load.find({status: {$in: ["OPEN", "BIDDING"] }, isVerified: true}).populate("sender", "name email photo").sort({ bidEndTime: 1});
+      // Driver sees all loads open for bidding (verified and unverified)
+      loads = await Load.find({status: {$in: ["OPEN", "BIDDING"] }}).populate("sender", "name email photo").sort({ bidEndTime: 1});
     }else{
       return res.status(403).json({message: "Access denied"});
     }

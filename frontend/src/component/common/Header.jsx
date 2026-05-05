@@ -96,7 +96,7 @@ const Header = () =>{
             ) : (
               <>
                 {role === "Driver" && (
-                  <CustomNavLink href="/seller/login" className={`${textColor} text-sm font-medium`}>Become a Sender</CustomNavLink>
+                  <CustomNavLink href="/sender/login" className={`${textColor} text-sm font-medium`}>Become a Sender</CustomNavLink>
                 )}
                 <CustomNavLink href="/dashboard">
                   <ProfileCard>
@@ -135,7 +135,7 @@ const Header = () =>{
               {!isLoggedIn ? (
                 <>
                   {role === "Driver" && (
-                    <CustomNavLink href="/seller/login" className="block text-sm font-medium" onClick={() => setIsOpen(false)}>
+                    <CustomNavLink href="/sender/login" className="block text-sm font-medium" onClick={() => setIsOpen(false)}>
                       Become a Sender
                     </CustomNavLink>
                   )}

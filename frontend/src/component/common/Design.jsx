@@ -1,8 +1,8 @@
 import PropTypes from "prop-types";
 import { NavLink } from "react-router-dom";
+import React from "react";
 
 const Title = ({ level, children, className }) => {
-  const Heading = `h${level}`;
   const classes = `${
     level === 1
       ? "text-[26px] sm:text-[35px] lg:text-[45px] font-[700]": level === 2
@@ -12,7 +12,7 @@ const Title = ({ level, children, className }) => {
       ? "text-[16px] sm:text-[19px] lg:text-[25px] font-[600]": "text-[13px] sm:text-[15px] font-[500]"
   }`;
 
-  return <Heading className={`${className} ${classes}`}>{children}</Heading>;
+  return React.createElement(`h${level}`, { className: `${className} ${classes}` }, children);
 };
 
 const Body = ({ children, className }) =>{
