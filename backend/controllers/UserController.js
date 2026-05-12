@@ -13,14 +13,14 @@ const registerUser =async(req, res) =>{
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
-    res.status(400).json({
+    return res.status(400).json({
         message:"Please fill in all required fileds",
     });
   }
 
   const userExits = await User.findOne({ email });
   if (userExits) {
-     res.status(400).json({
+     return res.status(400).json({
         message:"Email is already exit",
     });
   }
@@ -55,14 +55,14 @@ const loginUser =async(req, res) =>{
   const { email, password } = req.body;
 
   if (!email || !password) {
-    res.status(400).json({
+    return res.status(400).json({
         message:"Please fill in all required fileds",
     });
   }
 
   const userExits = await User.findOne({ email });
   if (!userExits) {
-     res.status(400).json({
+     return res.status(400).json({
         message:"User not found, Please signUp",
     });
   }
@@ -117,7 +117,7 @@ const loginAsSender =async (req, res) => {
 
   // Check if email and password are provided
   if (!email || !password) {
-    res.status(400).json({
+    return res.status(400).json({
         message:"Please provide both email and password",
     });
   }
@@ -125,7 +125,7 @@ const loginAsSender =async (req, res) => {
   // Find the user by email
   const user = await User.findOne({ email });
   if (!user) {
-    res.status(400).json({
+    return res.status(400).json({
         message:"User not found, please sign up",
     })
   }
@@ -133,7 +133,7 @@ const loginAsSender =async (req, res) => {
   // Verify the password
   const passwordIsCorrect = await bcrypt.compare(password, user.password);
   if (!passwordIsCorrect) {
-    res.status(400).json({
+    return res.status(400).json({
         message:"Invalid email or password",
     });
   }
