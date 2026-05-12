@@ -10,7 +10,7 @@ const generateToken = (id) => {
 
 const registerUser =async(req, res) =>{
     // console.log(req.body);
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({
@@ -25,10 +25,14 @@ const registerUser =async(req, res) =>{
     });
   }
 
+  const allowedRoles = ["Sender", "Driver"];
+  const userRole = allowedRoles.includes(role) ? role : "Driver";
+
   const user = await User.create({
     name,
     email,
     password,
+    role: userRole,
   });
 
   const token = generateToken(user._id);
@@ -51,7 +55,6 @@ const registerUser =async(req, res) =>{
 };
 
 const loginUser =async(req, res) =>{
-    console.log(req.body);
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -88,17 +91,20 @@ const loginUser =async(req, res) =>{
   }
 };
 
-const loginStatus =async (req, res) => {
-    console.log(req.body);
+const loginStatus = async (req, res) => {
   const token = req.cookies.token;
   if (!token) {
     return res.json(false);
   }
-  const verified = jwt.verify(token, process.env.JWT_SECRET);
-  if (verified) {
-    return res.json(true);
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    if (verified) {
+      return res.json(true);
+    }
+    return res.json(false);
+  } catch (error) {
+    return res.json(false);
   }
-  return res.json(false);
 };
 
 const logoutUser =async (req, res) => {
@@ -125,9 +131,9 @@ const loginAsSender =async (req, res) => {
   // Find the user by email
   const user = await User.findOne({ email });
   if (!user) {
-    return res.status(400).json({
-        message:"User not found, please sign up",
-    })
+    return res.status(404).json({
+        message:"User not found",
+    });
   }
 
   // Verify the password
@@ -138,9 +144,12 @@ const loginAsSender =async (req, res) => {
     });
   }
 
-  // If password is correct, update the role to 'sender'
-  user.role = "Sender";
-  await user.save();
+  // Check if user's role is Sender
+  if (user.role !== "Sender") {
+    return res.status(403).json({
+        message:"This account is not registered as a Sender. Please register with the Sender role.",
+    });
+  }
 
   // Generate a token and set cookie
   const token = generateToken(user._id);
@@ -152,7 +161,7 @@ const loginAsSender =async (req, res) => {
     secure: true,
   });
 
-  // Send the response with updated user info
+  // Send the response with user info
   const { _id, name, email: userEmail, photo, role } = user;
   res.status(200).json({ _id, name, email: userEmail, photo, role, token });
 };
@@ -192,7 +201,7 @@ const getUserProfile = async (req, res) => {
 
 // Only for admin users
 const getAllUser = async (req, res) => {
-  const userList = await User.find({});
+  const userList = await User.find({}).select("-password -__v");
   // console.log(userList)
 
   if (!userList.length) {
@@ -204,7 +213,7 @@ const getAllUser = async (req, res) => {
 
 const estimateIncome = async (req, res) => {
   try {
-    const admin = await User.findOne({ role: "admin" });
+    const admin = await User.findOne({ role: "Admin" });
     if (!admin) {
       return res.status(404).json({ error: "Admin user not found" });
     }

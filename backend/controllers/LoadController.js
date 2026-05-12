@@ -203,7 +203,6 @@ const updateLoad = async (req, res)=>{
       load.images = newImages;
     }
     
-    console.log(load)
     await load.save();
 
     return res.status(200).json({

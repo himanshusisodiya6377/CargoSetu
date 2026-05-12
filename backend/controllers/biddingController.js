@@ -121,74 +121,71 @@ const placeBid =async(req,res) =>{
 };
 
 const finalizeLoad = async (req, res)=>{
-  const { loadId } = req.body;
-  const senderId = req.user._id;
+  try {
+    const { loadId } = req.body;
+    const senderId = req.user._id;
 
-   const load = await Load.findOne({_id:loadId,sender:senderId}).populate("sender", "name email");
+     const load = await Load.findOne({_id:loadId,sender:senderId}).populate("sender", "name email");
 
-  if(!load) return res.status(404).json({message: "Load not found"});
+    if(!load) return res.status(404).json({message: "Load not found"});
 
-  if(load.status === "ASSIGNED")
-      return res.status(400).json({message: "Load already closed"});
-  
-   if(new Date() < new Date(load.bidEndTime)){
-      return res.status(400).json({
-        message: "Bidding is still active. You can assign only after the bid window ends.",
-      })}
+    if(load.status === "ASSIGNED")
+        return res.status(400).json({message: "Load already closed"});
+    
+     if(new Date() < new Date(load.bidEndTime)){
+        return res.status(400).json({
+          message: "Bidding is still active. You can assign only after the bid window ends.",
+        })}
 
-  const winningBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).populate("driver","name email phone");
+    const winningBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).populate("driver","name email phone");
 
-  if(!winningBid) return res.status(400).json({ message: "No bids found" });
+    if(!winningBid) return res.status(400).json({ message: "No bids found" });
 
-  console.log("Winning Bid Driver:", winningBid.driver);
-  console.log("Load Sender:", load.sender);
+    // commission
+    const commissionAmount =(load.adminCommission || 0)/100 * winningBid.amount;
 
-  // commission
-  const commissionAmount =(load.adminCommission || 0)/100 * winningBid.amount;
+    const finalAmount = winningBid.amount - commissionAmount;
 
-  const finalAmount = winningBid.amount - commissionAmount;
+    load.status = "ASSIGNED";
+    load.assignedDriver = winningBid.driver._id;
+    load.finalAmount = finalAmount;
 
-  load.status = "ASSIGNED";
-  load.assignedDriver = winningBid.driver._id;
-  load.finalAmount = finalAmount;
+    await load.save();
 
-  await load.save();
+    await BiddingLoad.updateMany(
+        {load: loadId, _id:{ $ne: winningBid._id }},
+        {status: "LOST"}
+    );
 
-  await BiddingLoad.updateMany(
-      {load: loadId, _id:{ $ne: winningBid._id }},
-      {status: "LOST"}
-  );
+    winningBid.status = "WON";
+    await winningBid.save();
+    
+     try {
+        await sendBidWonEmail({
+          driver: winningBid.driver,
+          load,
+          finalAmount,
+        });
+        await sendLoadAssignedEmail({
+          sender: load.sender,
+          driver: winningBid.driver,
+          load,
+          finalAmount,
+        });
+      } catch (emailErr) {
+        console.error("Email sending failed:", emailErr.message);
+        console.error("Stack:", emailErr.stack);
+      }
 
-  winningBid.status = "WON";
-  await winningBid.save();
-  
-   try {
-      console.log("Sending emails...");
-      console.log("Driver details:", { name: winningBid.driver?.name, email: winningBid.driver?.email });
-      console.log("Sender details:", { name: load.sender?.name, email: load.sender?.email });
-      
-      await sendBidWonEmail({
-        driver: winningBid.driver,
-        load,
-        finalAmount,
+
+    return res.status(200).json({
+        success: true,
+        message: "Load assigned successfully",
+        data: load,
       });
-      await sendLoadAssignedEmail({
-        sender: load.sender,
-        driver: winningBid.driver,
-        load,
-        finalAmount,
-      });
-    } catch (emailErr) {
-      console.error("Email sending failed:", emailErr.message);
-      console.error("Stack:", emailErr.stack);
-    }
-
-
-  return res.status(200).json({
-      success: true,
-      message: "Load assigned successfully",
-      data: load,
-    });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to finalize load", error: error.message });
+  }
 };
 
 const getWinningBids = async (req, res)=>{

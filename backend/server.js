@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
+const errorHandler = require("./middleware/errorHandler");
 const UserRoutes = require("./routes/User");
 const LoadRoutes = require("./routes/LoadRoutes.js");
 const LoadModel = require("./models/Load");
@@ -42,6 +43,8 @@ app.use("/api/users", UserRoutes);
 app.use("/api/Loads", LoadRoutes);
 app.use("/api/bidding", biddingRoutes);
 app.use("/api/contact", contactRoutes);
+
+app.use(errorHandler);
 
 
 cron.schedule("* * * * *",async ()=>{

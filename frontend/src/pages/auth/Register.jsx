@@ -5,7 +5,7 @@ import { register, RESET } from "../../redux/features/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { Container, Title, Body, Caption, Loader } from "../../routes/index";
 
-const initialState = {name: "", email: "", password: "", confirmPassword: ""};
+const initialState = {name: "", email: "", password: "", confirmPassword: "", role: "Driver"};
 
 export const Register = () =>{
   const dispatch = useDispatch();
@@ -17,11 +17,11 @@ export const Register = () =>{
 
   const handleSubmit = (e) =>{
     e.preventDefault();
-    const {name, email, password, confirmPassword} = formData;
+    const {name, email, password, confirmPassword, role} = formData;
     if(!name || !email || !password || !confirmPassword) return toast.error("All fields are required");
     if(password.length < 8) return toast.error("Password must be at least 8 characters");
     if(password !== confirmPassword) return toast.error("Passwords do not match");
-    dispatch(register({name, email, password}));
+    dispatch(register({name, email, password, role}));
   };
 
   useEffect(() =>{
@@ -69,6 +69,14 @@ export const Register = () =>{
                 <div>
                   <label className={lbl}>Confirm Password</label>
                   <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="Repeat password" className={inp} />
+                </div>
+
+                <div>
+                  <label className={lbl}>Register as</label>
+                  <select name="role" value={formData.role} onChange={handleChange} className={inp}>
+                    <option value="Driver">Driver</option>
+                    <option value="Sender">Sender</option>
+                  </select>
                 </div>
 
                 <button type="submit" disabled={isLoading} className={btn}>
