@@ -98,7 +98,6 @@ const updateProfile = async (userData) =>{
   const response = await axios.put(`${AUTH_URL}update`, userData, {
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data",
     },
     withCredentials: true,
   });

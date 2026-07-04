@@ -18,9 +18,10 @@ export const LoginAsSender = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { email, password } = formData;
-    if (!email || !password) return toast.error("All fields are required");
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) return toast.error("All fields are required");
     // Use loginUserAsSeller which calls the /sender endpoint
-    dispatch(loginUserAsSeller({ email, password }));
+    dispatch(loginUserAsSeller({ email: trimmedEmail, password }));
   };
 
   useEffect(() => {

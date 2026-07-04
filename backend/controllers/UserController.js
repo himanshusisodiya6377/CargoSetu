@@ -1,8 +1,9 @@
 const User = require("../models/User.js");
 const jwt = require("jsonwebtoken");
-const bcrypt=require("bcrypt")
+const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary.js");
+const { validatePassword } = require("../utils/passwordValidation");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -11,17 +12,26 @@ const generateToken = (id) => {
 const registerUser =async(req, res) =>{
     // console.log(req.body);
   const { name, email, password, role } = req.body;
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-  if (!name || !email || !password) {
+  if (!name || !normalizedEmail || !password) {
     return res.status(400).json({
         message:"Please fill in all required fileds",
     });
   }
 
-  const userExits = await User.findOne({ email });
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({
+      message: passwordValidation.errors[0],
+      errors: passwordValidation.errors,
+    });
+  }
+
+  const userExits = await User.findOne({ email: normalizedEmail });
   if (userExits) {
      return res.status(400).json({
-        message:"Email is already exit",
+        message:"Email is already registered.",
     });
   }
 
@@ -30,7 +40,7 @@ const registerUser =async(req, res) =>{
 
   const user = await User.create({
     name,
-    email,
+    email: normalizedEmail,
     password,
     role: userRole,
   });
@@ -45,8 +55,8 @@ const registerUser =async(req, res) =>{
   });
 
   if (user) {
-    const { _id, name, email, photo, role } = user;
-    res.status(201).json({ _id, name, email, photo, token, role });
+    const { _id, name: userName, email: userEmail, photo, role: userRole } = user;
+    res.status(201).json({ _id, name: userName, email: userEmail, photo, token, role: userRole });
   } else {
     res.status(400).json({
         message:"User invalid data!",
@@ -56,21 +66,28 @@ const registerUser =async(req, res) =>{
 
 const loginUser =async(req, res) =>{
   const { email, password } = req.body;
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return res.status(400).json({
-        message:"Please fill in all required fileds",
+        message:"Invalid email or password",
     });
   }
 
-  const userExits = await User.findOne({ email });
+  const userExits = await User.findOne({ email: normalizedEmail });
   if (!userExits) {
      return res.status(400).json({
-        message:"User not found, Please signUp",
+        message:"Invalid email or password",
     });
   }
 
   const passwordIsCorrrect = await bcrypt.compare(password, userExits.password);
+
+  if (!passwordIsCorrrect) {
+    return res.status(400).json({
+      message:"Invalid email or password",
+    });
+  }
 
   const token = generateToken(userExits._id);
   res.cookie("token", token, {
@@ -81,14 +98,8 @@ const loginUser =async(req, res) =>{
     secure: true,
   });
 
-  if (userExits && passwordIsCorrrect) {
-    const { _id, name, email, photo, role, token } = userExits;
-    res.status(201).json({ _id, name, email, photo, token, role });
-  } else {
-    res.status(400).json({
-        message:"Invalid email or password",
-    })
-  }
+  const { _id, name, email: userEmail, photo, role } = userExits;
+  res.status(200).json({ _id, name, email: userEmail, photo, token, role });
 };
 
 const loginStatus = async (req, res) => {
@@ -120,19 +131,20 @@ const logoutUser =async (req, res) => {
 
 const loginAsSender =async (req, res) => {
    const { email, password } = req.body;
+   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
   // Check if email and password are provided
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return res.status(400).json({
-        message:"Please provide both email and password",
+        message:"Invalid email or password",
     });
   }
 
   // Find the user by email
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
     return res.status(404).json({
-        message:"User not found",
+        message:"Invalid email or password",
     });
   }
 
@@ -147,7 +159,7 @@ const loginAsSender =async (req, res) => {
   // Check if user's role is Sender
   if (user.role !== "Sender") {
     return res.status(403).json({
-        message:"This account is not registered as a Sender. Please register with the Sender role.",
+        message:"Invalid email or password",
     });
   }
 

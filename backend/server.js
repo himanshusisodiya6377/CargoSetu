@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -16,8 +18,6 @@ const dns = require("dns");
 dns.setServers(["1.1.1.1","8.8.8.8"]);
 
 const app = express();
-
-require("dotenv").config();
 
 
 app.use(express.json({ limit: "50mb" }));

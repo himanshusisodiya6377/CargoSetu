@@ -3,19 +3,13 @@ import { CiGrid41 } from "react-icons/ci";
 import { IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineCategory } from "react-icons/md";
 import { RiAuctionLine } from "react-icons/ri";
-import { IoIosHeartEmpty } from "react-icons/io";
 import { User1 } from "../hero/Hero";
-import { IoIosLogOut } from "react-icons/io";
 import { CgProductHunt } from "react-icons/cg";
-import { TbCurrencyDollar } from "react-icons/tb";
 import { FiUser } from "react-icons/fi";
 import { FaPlusCircle } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import {RESET,getUserProfile,logout} from "../../redux/features/authSlice"
+import { useSelector } from "react-redux";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
-import { useEffect } from "react";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { TbTruckDelivery } from "react-icons/tb";
 import { FiCheckCircle } from "react-icons/fi";
@@ -24,21 +18,12 @@ export const Sidebar = ({onNavigate}) =>{
   useRedirectLoggedOutUser("/login");
   const location = useLocation();
 
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
   const {role,isLoggedIn}=useUserProfile();
 
   
   const { user } = useSelector((state) => state.auth);
   
     if(!isLoggedIn) return <p>You need to log to access this page.</p>
-  
-    const logoutUser = async () =>{
-      dispatch(RESET());
-      await dispatch(logout());
-      navigate("/");
-    };
 
     const handleNav = () => { if (onNavigate) onNavigate(); };
 
@@ -96,7 +81,7 @@ export const Sidebar = ({onNavigate}) =>{
           <>
             <CustomNavLink href="/winning-products" isActive={location.pathname === "/winning-products"} className={className}>
               <RiAuctionLine size={22} />
-              <span>{role === "Driver" ? "Assigned Loads" : "Winning Bids"}</span>
+              <span>{role === "Driver" ? "Loads Won" : "Assigned Loads"}</span>
             </CustomNavLink>
 
             <CustomNavLink href="/active-loads" isActive={location.pathname === "/active-loads"} className={className}>
@@ -117,12 +102,6 @@ export const Sidebar = ({onNavigate}) =>{
         </CustomNavLink>
 
       </div>
-
-      {/* Logout */}
-      <button onClick={logoutUser} className="flex items-center w-full gap-3 mt-4 bg-red-500 mb-3 hover:text-white p-4 rounded-full text-white">
-        <IoIosLogOut size={22} />
-        <span>Log Out</span>
-      </button>
 
     </section>
   );

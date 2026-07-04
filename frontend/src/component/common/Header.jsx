@@ -62,7 +62,7 @@ const Header = () =>{
 
           {/* LEFT */}
           <div className="flex items-center gap-12">
-            <Link href="/" className="flex gap-2 items-center">
+            <Link to="/" className="flex gap-2 items-center">
               <img src={logo} alt="Logo" className="h-8 sm:h-10 shrink-0"/>
               <p className={`${textColor} font-semibold text-md sm:text-xl`}>CargoSetu</p>
             </Link>

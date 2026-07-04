@@ -1,4 +1,5 @@
 import { Container, Title, Body, Caption, Heading } from "../routes/index";
+import { NavLink } from "react-router-dom";
 import { FiShield , FiUsers, FiTrendingDown } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
 import { trustList } from "../utils/data.jsx";
@@ -148,12 +149,12 @@ const About = () => {
             Join thousands of senders and drivers who are already saving time and money on every shipment.
           </Body>
           <div className="flex flex-wrap gap-4 justify-center">
-            <a href="/register" className="bg-yellow-300 text-slate-900 font-semibold px-8 py-3 rounded-full hover:bg-yellow-400 transition text-sm">
+            <NavLink to="/register" className="bg-yellow-300 text-slate-900 font-semibold px-8 py-3 rounded-full hover:bg-yellow-400 transition text-sm">
               Get Started Free
-            </a>
-            <a href="/auction" className="border border-slate-500 text-white font-semibold px-8 py-3 rounded-full hover:border-white transition text-sm">
+            </NavLink>
+            <NavLink to="/auction" className="border border-slate-500 text-white font-semibold px-8 py-3 rounded-full hover:border-white transition text-sm">
               Browse Live Auctions
-            </a>
+            </NavLink>
           </div>
         </Container>
       </section>

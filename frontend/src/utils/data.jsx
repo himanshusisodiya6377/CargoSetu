@@ -46,37 +46,37 @@ export const menulists = [
 export const categorylists = [
   {
     id: 1,
-    image: "../../public/category/c1.png",
+    image: "/category/c1.png",
     title: "General Goods",
   },
   {
     id: 2,
-    image:"../../public/category/c2.png",
+    image:"/category/c2.png",
     title: "Industrial & Machinery",
   },
   {
     id: 3,
-    image: "../../public/category/c4.png",
+    image: "/category/c4.png",
     title: "Construction Material",
   },
   {
     id: 4,
-    image: "../../public/category/c3.png",
+    image: "/category/c3.png",
     title: "FMCG & Retail",
   },
   {
     id: 5,
-    image: "../../public/category/c7.png",
+    image: "/category/c7.png",
     title: "Whole Sale Goods",
   },
   {
     id: 6,
-    image: "../../public/category/c6.png",
+    image: "/category/c6.png",
     title: "Expensive Goods",
   },
   {
     id: 7,
-    image: "../../public/category/c5.png",
+    image: "/category/c5.png",
     title: "Vehicle Transport",
   },
 ];
@@ -256,7 +256,7 @@ export const contactInfo =[
   { icon: <FiMapPin size={20} />, label: "Office", value: "12, Cargo Hub, Sector 44\nGurugram, Haryana 122003" },
   { icon: <FiMail size={20} />, label: "Email", value: "support@cargosetu.in" },
   { icon: <FiPhone size={20} />, label: "Phone", value: "+91 98765 43210" },
-  { icon: <FiClock size={20} />, label: "Hours", value: "Mon â€“ Sat: 9 AM â€“ 6 PM" },
+  { icon: <FiClock size={20} />, label: "Hours", value: "Mon - Sat: 9 AM - 6 PM" },
 ];
 
 export const vehicleOptions = ["TRUCK", "CONTAINER", "MINI_TRUCK", "PICKUP", "TRAILER"];

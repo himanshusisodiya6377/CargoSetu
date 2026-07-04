@@ -6,6 +6,15 @@ body {
   font-family: "DM Sans", sans-serif;
 }
 
+.live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: liveFlicker 1.2s infinite;
+}
+
 /* Navbar / Mobile Menu */
 .menu-container {
   background-color: #24262b;
@@ -46,6 +55,30 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes liveFlicker {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+  }
+  25% {
+    opacity: 0.45;
+    transform: scale(0.88);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.02);
+  }
+  75% {
+    opacity: 0.65;
+    transform: scale(0.95);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
   }
 }
 .active-link {

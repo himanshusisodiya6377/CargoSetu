@@ -18,8 +18,9 @@ export const LoginAsSeller = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { email, password } = formData;
-    if (!email || !password) return toast.error("All fields are required");
-    dispatch(loginUserAsSeller({ email, password }));
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) return toast.error("All fields are required");
+    dispatch(loginUserAsSeller({ email: trimmedEmail, password }));
   };
 
   useEffect(() => {

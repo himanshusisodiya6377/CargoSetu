@@ -6,8 +6,6 @@ const sendEmail = async (options) => {
       throw new Error("No recipient email provided");
     }
 
-    console.log("🔧 Creating transporter with SMTP host:", process.env.SMTP_HOST);
-
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
@@ -25,9 +23,7 @@ const sendEmail = async (options) => {
       text: options.message,
     };
 
-    console.log("📤 Sending email to:", options.email);
     const result = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully! Message ID:", result.messageId);
     return { success: true, messageId: result.messageId };
 
   } catch (error) {

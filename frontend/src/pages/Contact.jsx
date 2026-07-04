@@ -33,7 +33,7 @@ const Contact = ()=>{
             We're Here to <span className="text-yellow-300">Help You</span>
           </Title>
           <Body className="text-slate-400 leading-7 mt-5 max-w-xl mx-auto">
-            Have a question or need support? Send us a message and we'll reply within 24â€“48 hours.
+            Have a question or need support? Send us a message and we'll reply within 24-48 hours.
           </Body>
         </Container>
       </section>
@@ -65,7 +65,7 @@ const Contact = ()=>{
                     </div>
                     <Title level={5} className="text-slate-800">Message Sent!</Title>
                     <Body className="text-slate-500 max-w-sm">
-                      We've received your message and will get back to you within 24â€“48 hours.
+                      We've received your message and will get back to you within 24-48 hours.
                     </Body>
                     <button onClick={() => dispatch(resetContact())} className="text-sm text-green hover:underline font-medium">
                       Send another message

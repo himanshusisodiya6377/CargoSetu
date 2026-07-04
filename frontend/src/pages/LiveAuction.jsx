@@ -48,7 +48,10 @@ const LiveAuctions = () =>{
         <Container>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
             <div>
-              <Caption className="text-green-400 uppercase tracking-widest mb-2">Live Now</Caption>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="live-dot" aria-hidden="true" />
+                <Caption className="text-green-400 uppercase tracking-widest">Live Now</Caption>
+              </div>
               <Title level={3} className="text-white leading-tight">
                 <span className="text-yellow-300">Live Freight</span> Auctions
               </Title>
