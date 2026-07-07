@@ -19,7 +19,7 @@ const CompletedLoads = () =>{
       <div className="shadow-s1 p-6 rounded-lg">
         <h2 className="text-xl font-semibold text-gray-800">Completed Loads</h2>
         <p className="text-sm text-gray-400 mt-1">
-          {user?.role === "Driver" ? "Loads you have successfully delivered." : "Your loads that have been delivered."}
+          {user?.role === "Driver" ? "Loads you have won or delivered." : "Your loads that are assigned, ended, or delivered."}
         </p>
       </div>
 
@@ -41,7 +41,7 @@ const CompletedLoads = () =>{
                   <th className="py-2 px-3">
                     {user?.role === "Sender" ? "Driver" : "Sender"}
                   </th>
-                  <th className="py-2 px-3">Delivered On</th>
+                  <th className="py-2 px-3">Last Updated</th>
                   <th className="py-2 px-3 text-center">Status</th>
                   <th className="py-2 px-3 text-center">Action</th>
                 </tr>
@@ -49,27 +49,37 @@ const CompletedLoads = () =>{
               <tbody className="divide-y divide-gray-100">
                 {completedLoads.map((load) => {
                   const person = user?.role === "Sender" ? load.assignedDriver : load.sender;
+                  const statusBadge = {
+                    ASSIGNED:  { color: "bg-purple-100 text-purple-700", label: "Assigned" },
+                    ENDED:     { color: "bg-gray-100 text-gray-600",   label: "Ended — No bids" },
+                    DELIVERED: { color: "bg-green-100 text-green-700", label: "✔ Delivered" },
+                  }[load.status] || { color: "bg-gray-100 text-gray-600", label: load.status };
+
                   return (
                     <tr key={load._id} className="hover:bg-gray-50">
                       <td className="py-3 px-3 font-medium text-gray-800 max-w-[140px] truncate">{load.title}</td>
                       <td className="py-3 px-3 text-xs text-gray-400">{load.pickupLocation} → {load.dropLocation}</td>
                       <td className="py-3 px-3 text-center">{load.weight} kg</td>
                       <td className="py-3 px-3">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={person?.photo || "https://cdn-icons-png.flaticon.com/512/2202/2202112.png"}
-                            className="w-7 h-7 rounded-full object-cover"
-                            alt={person?.name}
-                          />
-                          <span className="capitalize text-xs">{person?.name || "—"}</span>
-                        </div>
+                        {person ? (
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={person?.photo || "https://cdn-icons-png.flaticon.com/512/2202/2202112.png"}
+                              className="w-7 h-7 rounded-full object-cover"
+                              alt={person?.name}
+                            />
+                            <span className="capitalize text-xs">{person?.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-xs text-gray-400">
-                        {load.deliveryDate ? new Date(load.deliveryDate).toLocaleDateString() : new Date(load.updatedAt).toLocaleDateString()}
+                        {new Date(load.updatedAt).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                          ✔ Delivered
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge.color}`}>
+                          {statusBadge.label}
                         </span>
                       </td>
                       <td className="py-3 px-3 text-center">

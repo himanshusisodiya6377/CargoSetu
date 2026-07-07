@@ -294,4 +294,25 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserBalance,getUserProfile ,getAllUser,estimateIncome,updateUserProfile,deleteUser};
+const becomeSender = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "Sender") {
+      return res.status(400).json({ message: "You are already a Sender" });
+    }
+
+    user.role = "Sender";
+    await user.save();
+
+    const { _id, name, email, photo, role } = user;
+    return res.status(200).json({ _id, name, email, photo, role });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to update role", error: error.message });
+  }
+};
+
+module.exports = { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserBalance,getUserProfile ,getAllUser,estimateIncome,updateUserProfile,deleteUser,becomeSender};

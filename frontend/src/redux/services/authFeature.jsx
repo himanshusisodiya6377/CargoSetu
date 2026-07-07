@@ -109,6 +109,19 @@ const deleteUser = async (id) =>{
   return response.data;
 };
 
-const authService ={register,login,logout,getCurrentUser,getLoginStatus,getUserProfile,loginUserAsSeller,getAllUser,updateProfile,deleteUser};
+const becomeSender = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(
+    `${AUTH_URL}become-sender`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+
+const authService ={register,login,logout,getCurrentUser,getLoginStatus,getUserProfile,loginUserAsSeller,getAllUser,updateProfile,deleteUser,becomeSender};
 
 export default authService;

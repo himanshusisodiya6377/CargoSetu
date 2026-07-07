@@ -56,13 +56,15 @@ const loadSchema = mongoose.Schema(
       enum: ["GENERAL", "FRAGILE", "LIQUID", "PERISHABLE", "HEAVY", "HAZARDOUS"],
       default: "General",
     },
+    bidDuration: {
+      type: Number,
+      default: 60,
+    },
     bidStartTime: {
       type: Date,
-      required: true,
     },
     bidEndTime: {
       type: Date,
-      required: true,
     },
     bids: [
       {
@@ -92,7 +94,7 @@ const loadSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["OPEN", "BIDDING", "ASSIGNED", "IN_TRANSIT", "DELIVERED"],
+      enum: ["OPEN", "BIDDING", "PAYMENT_PENDING", "ASSIGNED", "ENDED", "IN_TRANSIT", "DELIVERED"],
       default: "OPEN",
     },
     isVerified: {

@@ -10,9 +10,7 @@ router.get("/admin/all", auth, isAdmin, getAllLoadsByAdmin);
 router.delete("/admin/bulk", auth, isAdmin, deleteLoadsByAdmin);
 router.delete("/admin/:id", auth, isAdmin, deleteLoadByAdmin);
 
-router.post("/", auth, isSender, upload.fields([
-  { name: "images", maxCount: 5 }
-]), createLoad);
+router.post("/", auth, isSender, upload.array("images",5), createLoad);
 router.get("/", getAllLoads);
 router.delete("/:id", auth, isSender, deleteLoad);
 router.patch("/:id", auth, isSender, upload.array("images",5), updateLoad);

@@ -8,9 +8,8 @@ export default {
     extend: {
     colors: {
     primary: "#204C41",
-    green: "#5BBB7B",
-    green_100: "#EEF8F2",
     gray_100: "#6C7278",
+    green_100: "#EEF8F2",
     text: "#222222",
   },
    boxShadow: {

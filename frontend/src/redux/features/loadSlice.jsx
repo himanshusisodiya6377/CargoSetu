@@ -277,11 +277,13 @@ const loadSlice = createSlice({
         state.userLoads.data.unshift(action.payload.data);
         state.userLoads.count = (state.userLoads.count ?? 0) + 1;
       }
+      toast.success("Load posted successfully");
       })
   .addCase(createLoad.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
   .addCase(getLoads.pending, (state) => {
@@ -295,6 +297,7 @@ const loadSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
   .addCase(getUserLoads.pending, (state) => {
@@ -308,6 +311,7 @@ const loadSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
   .addCase(getLoad.pending, (state) => {
@@ -321,6 +325,7 @@ const loadSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
   .addCase(deleteLoad.pending, (state) => {
@@ -335,7 +340,12 @@ const loadSlice = createSlice({
           count: (state.loads.count || 1) - 1,
         };
   }
-      state.userLoads = state.userLoads.filter((item) => item._id !== id);
+      if (Array.isArray(state.userLoads)) {
+        state.userLoads = state.userLoads.filter((item) => item._id !== id);
+      } else if (state.userLoads?.data) {
+        state.userLoads.data = state.userLoads.data.filter((item) => item._id !== id);
+        state.userLoads.count = (state.userLoads.count || 1) - 1;
+      }
       toast.success("Load deleted successfully");
       })
   .addCase(deleteLoad.rejected, (state, action) => {
@@ -370,6 +380,10 @@ const loadSlice = createSlice({
       state.userLoads = state.userLoads.map((item) =>
       item._id === updatedLoad._id ? updatedLoad : item
       );
+      } else if (state.userLoads?.data) {
+        state.userLoads.data = state.userLoads.data.map((item) =>
+          item._id === updatedLoad._id ? updatedLoad : item
+        );
       }
 
         state.load = updatedLoad;
@@ -384,40 +398,45 @@ const loadSlice = createSlice({
       })
 
   .addCase(placeBid.pending, (state) =>{
-        state.isLoading = true;
       })
   .addCase(placeBid.fulfilled, (state, action) =>{
-
-       const loadId = action.payload.data.loadId;
-
-       const load = state.loads.find(l => l._id === loadId);
-
-     if (load) {
-    load.status = "ASSIGNED";
-  }
-
 })
   .addCase(placeBid.rejected, (state,action) =>{
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
   .addCase(sellLoad.fulfilled, (state,action) =>{
 
   const updatedLoad = action.payload.data;
 
-  state.loads = state.loads.map((item) =>
-    item._id === updatedLoad._id ? updatedLoad : item
-  );
+  if (Array.isArray(state.loads)) {
+    state.loads = state.loads.map((item) =>
+      item._id === updatedLoad._id ? updatedLoad : item
+    );
+  }
 
-  state.userLoads = state.userLoads.map((item) =>
-    item._id === updatedLoad._id ? updatedLoad : item
-  );
+  if (Array.isArray(state.userLoads)) {
+    state.userLoads = state.userLoads.map((item) =>
+      item._id === updatedLoad._id ? updatedLoad : item
+    );
+  } else if (state.userLoads?.data) {
+    state.userLoads.data = state.userLoads.data.map((item) =>
+      item._id === updatedLoad._id ? updatedLoad : item
+    );
+  }
 
-  toast.success("Load assigned to winner");
+  toast.success("Winner selected. Proceed to payment.");
 
 })
+  .addCase(sellLoad.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+        toast.error(action.payload);
+      })
 
   .addCase(placeBidAndRefresh.pending, (state) => {
   state.isLoading = true;
@@ -425,6 +444,7 @@ const loadSlice = createSlice({
   .addCase(placeBidAndRefresh.fulfilled, (state, action) =>{
   state.isLoading = false;
   state.load = action.payload;
+  toast.success("Bid placed successfully");
 })
   .addCase(placeBidAndRefresh.rejected, (state, action) =>{
   state.isLoading = false;
@@ -444,6 +464,7 @@ const loadSlice = createSlice({
   state.isLoading = false;
   state.isError = true;
   state.message = action.payload;
+  toast.error(action.payload);
 })
  
 .addCase(updateTracking.fulfilled,(state,action) =>{
@@ -479,6 +500,7 @@ const loadSlice = createSlice({
 .addCase(fetchActiveLoads.rejected, (state, action) =>{
   state.isLoading = false;
   state.message = action.payload;
+  toast.error(action.payload);
 })
 
 .addCase(fetchCompletedLoads.pending, (state) => { state.isLoading = true; })
@@ -489,6 +511,7 @@ const loadSlice = createSlice({
 .addCase(fetchCompletedLoads.rejected, (state, action) =>{
   state.isLoading = false;
   state.message = action.payload;
+  toast.error(action.payload);
 })
 
 .addCase(fetchMyBids.pending, (state) =>{state.isLoading = true})
@@ -499,6 +522,7 @@ const loadSlice = createSlice({
 .addCase(fetchMyBids.rejected, (state, action) =>{
   state.isLoading = false;
   state.message = action.payload;
+  toast.error(action.payload);
 })
 
 .addCase(updateMyBid.fulfilled, (state, action) =>{
@@ -527,6 +551,7 @@ const loadSlice = createSlice({
 .addCase(fetchAdminLoads.rejected, (state, action) =>{
   state.isLoading = false;
   state.message = action.payload;
+  toast.error(action.payload);
 })
 
 .addCase(deleteAdminLoad.fulfilled, (state, action) =>{
@@ -556,6 +581,7 @@ const loadSlice = createSlice({
 .addCase(fetchLoadBids.rejected, (state,action) =>{
   state.isLoading = false;
   state.message = action.payload;
+  toast.error(action.payload);
 })
 
 .addCase(deleteBidAdmin.fulfilled, (state,action) =>{

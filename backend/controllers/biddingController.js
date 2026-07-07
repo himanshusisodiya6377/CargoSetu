@@ -1,6 +1,7 @@
 const Load = require("../models/Load");
 const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
+const { calculateAndSave } = require("../utils/commission");
 const {sendBidPlacedEmail, sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
 
 const getBiddingHistory = async(req, res) =>{
@@ -48,8 +49,7 @@ const placeBid =async(req,res) =>{
         message: "Load not found",
       })}
 
-    // load status
-    if(load.status!=="OPEN"){
+    if(load.status !== "BIDDING"){
       return res.status(400).json({
         success: false,
         message: "Bidding is closed for this load",
@@ -67,10 +67,10 @@ const placeBid =async(req,res) =>{
     // check current lowest bid
     const lowestBid = await BiddingLoad.findOne({load: loadId}).sort({amount: 1});
 
-    if(lowestBid && amount >= lowestBid.amount){
+    if(lowestBid && amount > lowestBid.amount){
       return res.status(400).json({
         success: false,
-        message: "Your bid must be lower than the current lowest bid",
+        message: `Your bid must be ₹${lowestBid.amount} or lower`,
       })}
 
     // create new bid
@@ -129,8 +129,8 @@ const finalizeLoad = async (req, res)=>{
 
     if(!load) return res.status(404).json({message: "Load not found"});
 
-    if(load.status === "ASSIGNED")
-        return res.status(400).json({message: "Load already closed"});
+    if(load.status === "ASSIGNED" || load.status === "PAYMENT_PENDING")
+        return res.status(400).json({message: "Load already closed or payment pending"});
     
      if(new Date() < new Date(load.bidEndTime)){
         return res.status(400).json({
@@ -141,14 +141,8 @@ const finalizeLoad = async (req, res)=>{
 
     if(!winningBid) return res.status(400).json({ message: "No bids found" });
 
-    // commission
-    const commissionAmount =(load.adminCommission || 0)/100 * winningBid.amount;
-
-    const finalAmount = winningBid.amount - commissionAmount;
-
-    load.status = "ASSIGNED";
+    load.status = "PAYMENT_PENDING";
     load.assignedDriver = winningBid.driver._id;
-    load.finalAmount = finalAmount;
 
     await load.save();
 
@@ -158,30 +152,15 @@ const finalizeLoad = async (req, res)=>{
     );
 
     winningBid.status = "WON";
-    await winningBid.save();
-    
-     try {
-        await sendBidWonEmail({
-          driver: winningBid.driver,
-          load,
-          finalAmount,
-        });
-        await sendLoadAssignedEmail({
-          sender: load.sender,
-          driver: winningBid.driver,
-          load,
-          finalAmount,
-        });
-      } catch (emailErr) {
-        console.error("Email sending failed:", emailErr.message);
-        console.error("Stack:", emailErr.stack);
-      }
+    const commissionData = await calculateAndSave(winningBid);
 
+    load.adminCommission = commissionData.commissionPercentage;
 
     return res.status(200).json({
         success: true,
-        message: "Load assigned successfully",
+        message: "Bid selected. Payment is now pending.",
         data: load,
+        commission: commissionData,
       });
   } catch (error) {
     return res.status(500).json({ message: "Failed to finalize load", error: error.message });
@@ -202,7 +181,7 @@ const getWinningBids = async (req, res)=>{
         winningBids = winningBids.filter((b) => b.load?.status !== "DELIVERED");
 
     }else if(user.role === "Sender"){
-      const assignedLoads = await Load.find({sender: user._id, status: { $in:["ASSIGNED", "IN_TRANSIT"]}});
+      const assignedLoads = await Load.find({sender: user._id, status: { $in:["PAYMENT_PENDING", "ASSIGNED", "IN_TRANSIT"]}});
       const loadIds = assignedLoads.map((l) => l._id);
 
       winningBids = await BiddingLoad.find({load: { $in: loadIds }, status: "WON"}).populate("load").populate("driver", "name email phone photo vehicleType licenseNumber rating jobsCompleted").sort({updatedAt: -1});
@@ -250,13 +229,9 @@ const updateTrackingStatus = async (req, res)=>{
     await load.save();
 
     if(status === "DELIVERED"){
-      // Credit admin commission wallet
-      if (load.adminCommission > 0) {
-        const winningBid = await BiddingLoad.findOne({load: load._id, status: "WON"});
-        if (winningBid){
-          const commissionAmount = (load.adminCommission / 100) * winningBid.amount;
-          await User.updateOne({ role: "Admin" }, { $inc: { commissionBalance: commissionAmount } });
-        }
+      const winningBid = await BiddingLoad.findOne({load: load._id, status: "WON"});
+      if (winningBid && winningBid.commissionAmount > 0) {
+        await User.updateOne({ role: "Admin" }, { $inc: { commissionBalance: winningBid.commissionAmount } });
       }
       try{
         await sendDeliveryConfirmationEmail({sender: load.sender, load});

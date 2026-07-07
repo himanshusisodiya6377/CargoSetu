@@ -11,11 +11,13 @@ import { TbGavel } from "react-icons/tb";
 import { DriverDashboard } from "./DriverDashboard";
 
 const STATUS_COLORS ={
-  OPEN:       "bg-blue-100 text-blue-700",
-  BIDDING:    "bg-yellow-100 text-yellow-700",
-  ASSIGNED:   "bg-purple-100 text-purple-700",
-  IN_TRANSIT: "bg-orange-100 text-orange-700",
-  DELIVERED:  "bg-green-100 text-green-700",
+  OPEN:           "bg-blue-100 text-blue-700",
+  BIDDING:        "bg-yellow-100 text-yellow-700",
+  PAYMENT_PENDING:"bg-orange-100 text-orange-700",
+  ASSIGNED:       "bg-purple-100 text-purple-700",
+  ENDED:          "bg-gray-100 text-gray-600",
+  IN_TRANSIT:     "bg-orange-100 text-orange-700",
+  DELIVERED:      "bg-green-100 text-green-700",
 };
 
 export const Dashboard = () =>{
@@ -38,7 +40,18 @@ export const Dashboard = () =>{
     delivered: loads.filter((l) => l.status === "DELIVERED").length,
   }),[loads]);
 
-  const recentLoads = useMemo(() => loads.slice(0, 5),[loads]);
+  const recentLoads = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
+    const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
+    return loads
+      .filter((l) => {
+        const created = new Date(l.createdAt);
+        return created >= startOfYesterday && created < endOfToday;
+      })
+      .slice(0, 5);
+  },[loads]);
 
   if(role === "Driver") return <DriverDashboard />;
   if(role === "Admin")  return <AdminDashboard />;
@@ -117,8 +130,8 @@ export const Dashboard = () =>{
                         <NavLink to={`/load/${load._id}`} className="text-gray-500 hover:text-green" title="View">
                           <FiEye size={15} />
                         </NavLink>
-                        {load.status === "OPEN" && (load.bids?.length ?? 0) === 0 && (
-                          <NavLink to={`/product/update/${load._id}`} className="text-gray-500 hover:text-green" title="Edit">
+                        {load.status === "OPEN" && (
+                          <NavLink to={`/load/update/${load._id}`} className="text-gray-500 hover:text-green" title="Edit">
                             <FiEdit2 size={15} />
                           </NavLink>
                         )}

@@ -8,6 +8,7 @@ import { FiEdit2, FiTrash2, FiEye, FiCheck, FiX } from "react-icons/fi";
 const STATUS_BADGE = {
   OPEN:       "bg-blue-100 text-blue-700",
   BIDDING:    "bg-yellow-100 text-yellow-700",
+  PAYMENT_PENDING: "bg-orange-100 text-orange-700",
   ASSIGNED:   "bg-purple-100 text-purple-700",
   IN_TRANSIT: "bg-orange-100 text-orange-700",
   DELIVERED:  "bg-green-100 text-green-700",

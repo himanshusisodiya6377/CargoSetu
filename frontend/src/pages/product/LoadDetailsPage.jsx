@@ -3,9 +3,10 @@ import { commonClassNameOfInput } from "../../component/common/Design";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { getLoad, getLoads, placeBidAndRefresh, sellLoad, updateTracking } from "../../redux/features/loadSlice";
+import { getLoad, placeBid, sellLoad, updateTracking } from "../../redux/features/loadSlice";
+import { createPaymentOrder, verifyPayment, fetchPaymentDetails, resetPayment } from "../../redux/features/paymentSlice";
 import { toast } from "react-toastify";
-import { FiPackage, FiTruck, FiCheckCircle } from "react-icons/fi";
+import { FiPackage, FiTruck, FiCheckCircle, FiCreditCard, FiCheck } from "react-icons/fi";
 import { BACKEND_URL } from "../../utils/url";
 
 const STEPS = [
@@ -51,6 +52,7 @@ export const LoadDetailsPage = () =>{
   const [bidAmount, setBidAmount] = useState("");
   const [isLoadingBid, setIsLoadingBid] = useState(false);
   const [bids, setBids] = useState([]);
+  const [paymentInfo, setPaymentInfo] = useState(null);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -65,6 +67,7 @@ export const LoadDetailsPage = () =>{
 
   const {load, isLoading} = useSelector((state) => state.load);
   const {user} = useSelector((state) => state.auth);
+  const { payment: reduxPayment } = useSelector((state) => state.payment);
 
   const fetchBids = async () =>{
     try {
@@ -84,6 +87,14 @@ export const LoadDetailsPage = () =>{
       fetchBids();
     }
   },[id, dispatch]);
+
+  useEffect(() => {
+    if (id && ["PAYMENT_PENDING", "ASSIGNED"].includes(load?.status)) {
+      dispatch(fetchPaymentDetails(id)).then((res) => {
+        if (res.payload?.data) setPaymentInfo(res.payload.data);
+      });
+    }
+  }, [id, load?.status, dispatch]);
 
   //Poll for new bids every 8 seconds while auction is live
   useEffect(() =>{
@@ -123,6 +134,61 @@ export const LoadDetailsPage = () =>{
 
   const handleTabClick = (tab)=>setActiveTab(tab);
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayNow = async () => {
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      toast.error("Failed to load payment gateway. Please try again.");
+      return;
+    }
+
+    const result = await dispatch(createPaymentOrder(load._id));
+    if (result.meta.requestStatus === "rejected") return;
+
+    const { orderId, amount } = result.payload;
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount,
+      currency: "INR",
+      name: "CargoSetu",
+      description: `Payment for load: ${load.title}`,
+      order_id: orderId,
+      handler: async (response) => {
+        const verifyResult = await dispatch(verifyPayment({
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+        }));
+        if (verifyResult.meta.requestStatus === "fulfilled") {
+          dispatch(getLoad(load._id));
+        }
+      },
+      modal: {
+        ondismiss: () => {
+          toast.info("Payment cancelled. You can try again.");
+        },
+      },
+      theme: { color: "#5BBB7B" },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.on("payment.failed", (response) => {
+      toast.error(`Payment failed: ${response.error.description}`);
+    });
+    rzp.open();
+  };
+
   const handleBidSubmit = async (e)=>{
     e.preventDefault();
   
@@ -141,28 +207,27 @@ export const LoadDetailsPage = () =>{
     //Check if bid is lower than current lowest bid
     if(bids && bids.length > 0){
       const currentLowest = Math.min(...bids.map(b => b.amount));
-      if(bidAmountNum >= currentLowest){
-        toast.error(`Your bid must be lower than the current lowest bid ₹${currentLowest}`);
+      if(bidAmountNum > currentLowest){
+        toast.error(`Your bid must be ₹${currentLowest} or lower`);
         return;
       }}
 
     setIsLoadingBid(true);
-    const result = await dispatch(placeBidAndRefresh({ id, amount: bidAmountNum}));
+    const result = await dispatch(placeBid({ id, amount: bidAmountNum}));
     if(result.meta.requestStatus === "fulfilled"){
-      toast.success("Bid placed successfully!");
+      toast.success("Bid placed successfully");
       setBidAmount("");
-      // Refresh all data
       await fetchBids();
-      dispatch(getLoad(id));
-      dispatch(getLoads());
     }else{
       toast.error(result.payload || "Failed to place bid. Try again.");
     }
     setIsLoadingBid(false)};
 
   const handleAssignDriver = (loadId)=>{
-    if(window.confirm("Assign this load to lowest bidder?")){
-      dispatch(sellLoad(loadId));
+    if(window.confirm("Select the lowest bidder for this load?")){
+      dispatch(sellLoad(loadId)).then(() => {
+        dispatch(getLoad(loadId));
+      });
     }};
 
   const handleTrackingUpdate = (loadId, status)=>{
@@ -248,7 +313,7 @@ export const LoadDetailsPage = () =>{
               <Caption className="text-gray-400 text-xs"> Ends: {auctionEndUTC} </Caption>
             </div>
 
-            {user?.role === "Driver" && load?.status === "OPEN" && !timeLeft.ended && (
+            {user?.role === "Driver" && load?.status === "BIDDING" && !timeLeft.ended && (
               <div className="mt-6 p-6 bg-gray-50 border rounded-lg">
                 {!load?.isVerified && (
                   <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -264,9 +329,9 @@ export const LoadDetailsPage = () =>{
                     type="number"
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
-                    placeholder={lowestBid ? `Must be below ₹${lowestBid}` : "Enter your bid amount"}
+                    placeholder={lowestBid ? `Must be ₹${lowestBid} or lower` : "Enter your bid amount"}
                     min="1"
-                    step="100"
+                    step="1"
                     disabled={isLoadingBid}
                   />
                   <button type="submit" disabled={isLoadingBid} className="bg-green text-white px-6 py-3 rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
@@ -281,15 +346,83 @@ export const LoadDetailsPage = () =>{
               </div>
             )}
 
-            {user?.role === "Sender" && load?.status === "OPEN" && timeLeft.ended && (
+            {user?.role === "Sender" && load?.status === "BIDDING" && timeLeft.ended && (
               <div className="mt-6">
                 <button onClick={() => handleAssignDriver(load._id)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition">
-                  Assign Lowest Bidder
+                  Select Winning Bid
                 </button>
               </div>
             )}
+
+            {user?.role === "Sender" && load?.status === "PAYMENT_PENDING" && (
+              <div className="mt-6 p-6 border-2 border-yellow-300 bg-yellow-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <FiCreditCard size={24} className="text-yellow-600" />
+                  <div>
+                    <p className="font-semibold text-gray-800">Payment Pending</p>
+                    <p className="text-sm text-gray-600">Complete payment to assign the driver</p>
+                  </div>
+                </div>
+                {paymentInfo?.commissionPercentage && (
+                  <div className="mb-4 p-3 bg-white rounded-lg border border-yellow-200 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bid Amount</span>
+                      <span className="font-medium">₹{paymentInfo.amount?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Platform Fee ({paymentInfo.commissionPercentage}%)</span>
+                      <span className="font-medium text-orange-600">₹{paymentInfo.commissionAmount?.toLocaleString()}</span>
+                    </div>
+                    <hr className="border-dashed border-gray-300 my-1" />
+                    <div className="flex justify-between font-semibold text-gray-800">
+                      <span>Total Payable</span>
+                      <span>₹{paymentInfo.amount?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={handlePayNow}
+                  className="w-full bg-green text-white font-semibold py-3 rounded-lg hover:bg-primary transition shadow-md"
+                >
+                  Proceed to Pay ₹{paymentInfo ? paymentInfo.amount?.toLocaleString() : load?.lowestBid?.amount?.toLocaleString() || "—"}
+                </button>
+              </div>
+            )}
+
+            {user?.role === "Sender" && paymentInfo?.paymentStatus === "SUCCESSFUL" && (
+              <div className="mt-6 p-6 border-2 border-green-300 bg-green-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <FiCheck size={24} className="text-green-600" />
+                  <div>
+                    <p className="font-semibold text-green-800">Payment Successful</p>
+                    <p className="text-sm text-green-700">
+                      Transaction ID: {paymentInfo.transactionId}
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      Paid on {new Date(paymentInfo.paidAt).toLocaleString()} &middot; ₹{paymentInfo.amount?.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                {paymentInfo?.commissionPercentage && (
+                  <div className="p-3 bg-white rounded-lg border border-green-200 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bid Amount</span>
+                      <span className="font-medium">₹{paymentInfo.amount?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Platform Fee ({paymentInfo.commissionPercentage}%)</span>
+                      <span className="font-medium text-orange-600">-₹{paymentInfo.commissionAmount?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Driver Earnings</span>
+                      <span className="font-medium text-green-600">₹{paymentInfo.driverAmount?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
     
-            {["ASSIGNED", "IN_TRANSIT", "DELIVERED"].includes(load?.status) && (
+            {["PAYMENT_PENDING", "ASSIGNED", "IN_TRANSIT", "DELIVERED"].includes(load?.status) && (
               <div className="mt-8 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <div>

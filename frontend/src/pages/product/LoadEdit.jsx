@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import { PrimaryButton, Caption, Title } from "../../routes/index";
+import { Caption, Title } from "../../routes/index";
 import { commonClassNameOfInput } from "../../component/common/Design";
 import { updateLoad, getLoad } from "../../redux/features/loadSlice";
+import { toast } from "react-toastify";
+
+const BID_DURATIONS = [
+  { value: "30", label: "30 minutes" },
+  { value: "60", label: "1 hour" },
+  { value: "120", label: "2 hours" },
+  { value: "360", label: "6 hours" },
+  { value: "1440", label: "24 hours" },
+];
 
 export const LoadEdit = ()=>{
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {id} = useParams();
@@ -21,17 +29,20 @@ export const LoadEdit = ()=>{
     maxBudget: "",
     vehicleType: "TRUCK",
     cargoType: "GENERAL",
-    bidStartTime: "",
-    bidEndTime: "",
+    bidDuration: "60",
     description: "",
   });
 
-  const {title,pickupLocation,dropLocation,weight,maxBudget,vehicleType,cargoType,bidStartTime,bidEndTime,description} = formData;
+  const [existingBidTimes, setExistingBidTimes] = useState(null);
+
+  const {title,pickupLocation,dropLocation,weight,maxBudget,vehicleType,cargoType,bidDuration,description} = formData;
 
   useEffect(()=>{
     dispatch(getLoad(id)).then((res)=>{
-      if(res.payload?.data){
-        const load = res.payload.data;
+      const loadData = res.payload?.data || res.payload;
+      if(loadData?._id || loadData?.title){
+        const load = loadData;
+        const duration = load.bidDuration || 60;
 
         setFormData({
           title: load.title || "",
@@ -41,9 +52,13 @@ export const LoadEdit = ()=>{
           maxBudget: load.maxBudget || "",
           vehicleType: load.vehicleType || "TRUCK",
           cargoType: load.cargoType || "GENERAL",
-          bidStartTime: load.bidStartTime ? new Date(load.bidStartTime).toISOString().slice(0, 16) : "",
-          bidEndTime: load.bidEndTime ? new Date(load.bidEndTime).toISOString().slice(0, 16) : "",
+          bidDuration: String(duration),
           description: load.description || "",
+        });
+
+        setExistingBidTimes({
+          start: load.bidStartTime,
+          end: load.bidEndTime,
         });
       }
     });
@@ -51,7 +66,6 @@ export const LoadEdit = ()=>{
 
   const handleInputChange =(e)=>{
     const {name,value} = e.target;
-
     setFormData((prev) =>({
       ...prev,
       [name]:value,
@@ -74,21 +88,28 @@ export const LoadEdit = ()=>{
     if(maxBudget !== "") data.append("maxBudget", maxBudget);
     if(vehicleType !== "") data.append("vehicleType", vehicleType);
     if(cargoType !== "") data.append("cargoType", cargoType);
-    if(bidStartTime !== "") data.append("bidStartTime", bidStartTime);
-    if(bidEndTime !== "") data.append("bidEndTime", bidEndTime);
     if(description !== "") data.append("description", description);
+    data.append("bidDuration", bidDuration);
 
     if(images.length > 0){
       for (let i = 0; i < images.length; i++) {
         data.append("images", images[i]);
       }}
 
-    // console.log(formData);
     dispatch(updateLoad({id, formData: data}))
       .unwrap()
       .then(()=>{
+        toast.success("Load updated successfully");
         navigate("/load");
-      })};
+      })
+      .catch((err)=>{
+        toast.error(err || "Failed to update load");
+      });
+  };
+
+  const now = new Date();
+  const newStart = new Date(now.getTime() + 5 * 60 * 1000);
+  const newEnd = new Date(newStart.getTime() + parseInt(bidDuration || 60) * 60 * 1000);
 
   return (
     <section className="bg-white shadow-s1 p-4 sm:p-8 rounded-xl">
@@ -129,7 +150,6 @@ export const LoadEdit = ()=>{
               className={commonClassNameOfInput}
             />
           </div>
-
         </div>
 
         <div className="flex flex-col sm:flex-row gap-5">
@@ -154,7 +174,6 @@ export const LoadEdit = ()=>{
               className={commonClassNameOfInput}
             />
           </div>
-
         </div>
 
         <div>
@@ -191,29 +210,25 @@ export const LoadEdit = ()=>{
           </select>
         </div>
 
-        <div className="flex gap-5">
-
-          <div className="w-1/2">
-            <Caption className="mb-2">Bid Start Time</Caption>
-            <input
-              type="datetime-local"
-              name="bidStartTime"
-              value={bidStartTime}
-              onChange={handleInputChange}
-              className={commonClassNameOfInput}
-            />
-          </div>
-
-          <div className="w-1/2">
-            <Caption className="mb-2">Bid End Time</Caption>
-            <input
-              type="datetime-local"
-              name="bidEndTime"
-              value={bidEndTime}
-              onChange={handleInputChange}
-              className={commonClassNameOfInput}
-            />
-          </div>
+        <div>
+          <Caption className="mb-2">Bidding Duration</Caption>
+          <select
+            name="bidDuration"
+            value={bidDuration}
+            onChange={handleInputChange}
+            className={commonClassNameOfInput}
+          >
+            {BID_DURATIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          {existingBidTimes && (
+            <p className="text-xs text-gray_100 mt-1">
+              Originally scheduled: {new Date(existingBidTimes.start).toLocaleString()} &ndash; {new Date(existingBidTimes.end).toLocaleString()}.
+              Changing the duration will recalculate times from now.
+              Est. new start: {newStart.toLocaleString()} &middot; End: {newEnd.toLocaleString()}
+            </p>
+          )}
         </div>
 
         <div>
@@ -237,9 +252,9 @@ export const LoadEdit = ()=>{
           />
         </div>
 
-        <PrimaryButton type="submit" className="rounded-none mt-5">
-          Update Load
-        </PrimaryButton>
+        <button type="submit" className="w-full bg-green text-white font-semibold rounded-lg px-16 py-3 hover:bg-primary transition shadow-md">
+          UPDATE LOAD
+        </button>
       </form>
     </section>
   );

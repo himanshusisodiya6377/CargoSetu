@@ -20,6 +20,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Services from "./pages/Services";
 import AdminLoadManagement from "./admin/product/AdminLoadManagement";
+import RevenueDashboard from "./admin/RevenueDashboard";
 
 function App() {
  
@@ -124,6 +125,18 @@ function App() {
             }
           />
            <Route
+            path="/admin/revenue"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <DashboardLayout>
+                    <RevenueDashboard/>
+                  </DashboardLayout>
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+           <Route
             path="/userlist"
             element={
               <PrivateRoute>
@@ -160,7 +173,7 @@ function App() {
             }
           />
            <Route
-            path="/product/update/:id"
+            path="/load/update/:id"
             element={
               <PrivateRoute>
                 <Layout>

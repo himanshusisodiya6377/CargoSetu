@@ -10,9 +10,11 @@ const LoadRoutes = require("./routes/LoadRoutes.js");
 const LoadModel = require("./models/Load");
 const cron = require("node-cron");
 const BiddingLoad = require("./models/biddingLoad");
+const { calculateAndSave } = require("./utils/commission");
 const biddingRoutes = require("./routes/biddingRoutes.js");
 const contactRoutes = require("./routes/contactRoutes.js");
-const { sendBidWonEmail, sendLoadAssignedEmail } = require("./services/biddingEmailService");
+const paymentRoutes = require("./routes/paymentRoutes.js");
+const commissionRoutes = require("./routes/commissionRoutes.js");
 const dns = require("dns");
 
 dns.setServers(["1.1.1.1","8.8.8.8"]);
@@ -43,6 +45,8 @@ app.use("/api/users", UserRoutes);
 app.use("/api/Loads", LoadRoutes);
 app.use("/api/bidding", biddingRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/commission", commissionRoutes);
 
 app.use(errorHandler);
 
@@ -50,41 +54,47 @@ app.use(errorHandler);
 cron.schedule("* * * * *",async ()=>{
   try{
     const now = new Date();
-    //Find loads that ended but haven't been assigned yet and have bids
+
+    // Start bidding for loads whose bidStartTime has arrived
+    const startedLoads = await LoadModel.find({
+      status: "OPEN",
+      bidStartTime: { $lte: now }
+    });
+
+    for(const load of startedLoads){
+      load.status = "BIDDING";
+      await load.save();
+      console.log(`Load ${load._id} bidding started`);
+    }
+
+    // End bidding or set payment pending for loads whose bidEndTime has passed
     const expiredLoads = await LoadModel.find({
-      status:"OPEN",
-      bidEndTime:{$lte: now}}).populate("sender","name email");
+      status: "BIDDING",
+      bidEndTime: { $lte: now }
+    });
 
     for(const load of expiredLoads){
-      const winningBid = await BiddingLoad.findOne({load:load._id}).sort({amount:1}).populate("driver","name email");
+      const winningBid = await BiddingLoad.findOne({load:load._id}).sort({amount:1});
 
       if(!winningBid){
-        load.status = "BIDDING";
+        load.status = "ENDED";
         await load.save();
-        console.log(`Load ${load._id} expired with no bids`);
+        console.log(`Load ${load._id} ended with no bids`);
         continue;
       }
 
-      const commissionAmount = (load.adminCommission/100)*winningBid.amount;
-      const finalAmount = winningBid.amount-commissionAmount;
-
-      load.status ="ASSIGNED";
-      load.assignedDriver =winningBid.driver._id;
+      load.status = "PAYMENT_PENDING";
+      load.assignedDriver = winningBid.driver._id;
       await load.save();
 
       await BiddingLoad.updateMany(
         {load:load._id, _id:{ $ne: winningBid._id }},
         {status:"LOST"});
       winningBid.status = "WON";
-      await winningBid.save();
+      const cronCommission = await calculateAndSave(winningBid);
+      load.adminCommission = cronCommission.commissionPercentage;
 
-      try{
-        await sendBidWonEmail({driver:winningBid.driver,load,finalAmount});
-        await sendLoadAssignedEmail({sender:load.sender,driver:winningBid.driver,load,finalAmount});
-      } catch (err) {
-        console.error(`Email failed for load ${load._id}:`,err.message);
-      }
-      console.log(`Auto-assigned load ${load._id} to driver ${winningBid.driver.name}`);
+      console.log(`Load ${load._id} awaiting payment from sender`);
     }
   } catch (err) {
     console.error("Cron job error:",err.message);

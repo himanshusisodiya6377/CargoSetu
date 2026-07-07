@@ -16,11 +16,13 @@ const ROLE_COLORS ={
 };
 
 const STATUS_COLORS ={
-  OPEN:       "bg-blue-100 text-blue-700",
-  BIDDING:    "bg-yellow-100 text-yellow-700",
-  ASSIGNED:   "bg-purple-100 text-purple-700",
-  IN_TRANSIT: "bg-orange-100 text-orange-700",
-  DELIVERED:  "bg-green-100 text-green-700",
+  OPEN:           "bg-blue-100 text-blue-700",
+  BIDDING:        "bg-yellow-100 text-yellow-700",
+  PAYMENT_PENDING:"bg-orange-100 text-orange-700",
+  ASSIGNED:       "bg-purple-100 text-purple-700",
+  ENDED:          "bg-gray-100 text-gray-600",
+  IN_TRANSIT:     "bg-orange-100 text-orange-700",
+  DELIVERED:      "bg-green-100 text-green-700",
 };
 
 export const AdminDashboard = () =>{

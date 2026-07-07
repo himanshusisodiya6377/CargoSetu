@@ -17,6 +17,18 @@ const bidSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    bidAmount: {
+      type: Number,
+    },
+    commissionPercentage: {
+      type: Number,
+    },
+    commissionAmount: {
+      type: Number,
+    },
+    driverAmount: {
+      type: Number,
+    },
     status: {
       type: String,
       enum: ["ACTIVE", "WON", "LOST"],

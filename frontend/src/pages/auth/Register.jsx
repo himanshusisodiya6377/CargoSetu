@@ -3,6 +3,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import { toast } from "react-toastify";
 import { register, RESET } from "../../redux/features/authSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Loader } from "../../routes/index";
 import AuthShell from "./AuthShell";
 import { getPasswordChecks, validatePassword } from "../../utils/passwordValidation";
@@ -13,6 +14,8 @@ export const Register = () =>{
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formData, setFormData] = useState(initialState);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { isLoading, isSuccess, isError, message } = useSelector((state) => state.auth);
 
   const handleChange = (e) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -74,7 +77,12 @@ export const Register = () =>{
 
           <div>
             <label className={lbl}>Password</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Min. 8 characters" className={inp} />
+            <div className="relative">
+              <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required placeholder="Min. 8 characters" className={`${inp} pr-10`} />
+              <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
             {formData.password && unmetPasswordChecks.length > 0 && (
               <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Missing password requirements</p>
@@ -97,7 +105,12 @@ export const Register = () =>{
 
           <div>
             <label className={lbl}>Confirm Password</label>
-            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="Repeat password" className={inp} />
+            <div className="relative">
+              <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="Repeat password" className={`${inp} pr-10`} />
+              <button type="button" onClick={() => setShowConfirmPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
             {formData.confirmPassword && !passwordsMatch && (
               <p className="mt-2 text-sm text-red-600">Passwords do not match.</p>
             )}

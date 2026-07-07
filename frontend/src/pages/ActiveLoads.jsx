@@ -7,12 +7,12 @@ import { MdLocationOn, MdLocationOff } from "react-icons/md";
 
 const StatusBadge = ({status}) =>{
   const colors = {
-    OPEN: "bg-blue-100 text-blue-700",
     BIDDING: "bg-yellow-100 text-yellow-700",
+    PAYMENT_PENDING: "bg-orange-100 text-orange-700",
   };
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[status] || "bg-gray-100 text-gray-600"}`}>
-      {status}
+      {status?.replace("_", " ")}
     </span>
   );
 };
@@ -60,11 +60,7 @@ const ActiveLoads = ()=>{
         <p className="text-sm text-gray-400 mt-1">
           {user?.role === "Driver" ? "Loads currently open for bidding." : "Your loads currently open for bidding."}
         </p>
-        {user?.role === "Driver" && locationStatus === "granted" && (
-          <p className="mt-2 flex items-center gap-1 text-xs text-green-600 font-medium">
-            <MdLocationOn size={14} /> Showing loads within 100 km of your location
-          </p>
-        )}
+
         {user?.role === "Driver" && locationStatus === "denied" && (
           <p className="mt-2 flex items-center gap-1 text-xs text-yellow-600 font-medium">
             <MdLocationOff size={14} /> Location access denied — showing all available loads

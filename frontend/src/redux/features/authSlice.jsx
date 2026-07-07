@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import authService from "../services/authFeature";
+import { toast } from "react-toastify";
 
 const user = JSON.parse(localStorage.getItem("user"));
 
@@ -154,6 +155,23 @@ export const updateUserProfile = createAsyncThunk(
   }
 );
 
+export const becomeSender = createAsyncThunk(
+  "auth/becomeSender",
+  async (_, thunkAPI) => {
+    try {
+      const data = await authService.becomeSender();
+      localStorage.setItem("user", JSON.stringify(data));
+      return data;
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const deleteUser = createAsyncThunk(
   "auth/deleteUser",
   async (id, thunkAPI) => {
@@ -197,12 +215,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload;
+        toast.success("Account created successfully!");
       })
 
       .addCase(register.rejected, (state, action) =>{       
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
       .addCase(login.pending, (state) =>{
@@ -215,6 +235,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isLoggedIn = true;
         state.user = action.payload.user;
+        toast.success("Welcome back!");
       })
 
       .addCase(login.rejected, (state, action) =>{
@@ -222,6 +243,7 @@ const authSlice = createSlice({
         state.isError = true;
         state.isLoggedIn = false;
         state.message = action.payload;
+        toast.error(action.payload);
       })
       
        .addCase(logout.pending, (state) => {
@@ -232,12 +254,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isLoggedIn = false;
+        toast.success("Logged out successfully");
       })
 
       .addCase(logout.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
       .addCase(getLogInStatus.pending, (state) => {
@@ -304,12 +328,14 @@ const authSlice = createSlice({
         state.user = action.payload;
 
         localStorage.setItem("user", JSON.stringify(action.payload));
+        toast.success("Logged in as Seller");
       })
 
       .addCase(loginUserAsSeller.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
       .addCase(getAllUsers.pending, (state) => {
@@ -326,6 +352,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       })
 
       .addCase(updateUserProfile.pending, (state) => {
@@ -336,21 +363,43 @@ const authSlice = createSlice({
         state.isSuccess = true;
         state.user = action.payload;
         localStorage.setItem("user", JSON.stringify(action.payload));
+        toast.success("Profile updated successfully");
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
+      })
+
+      .addCase(becomeSender.pending, (state) => {
+        state.isLoading = true;
+        state.isError = false;
+      })
+      .addCase(becomeSender.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.user = action.payload;
+        localStorage.setItem("user", JSON.stringify(action.payload));
+        toast.success("Account upgraded to Sender!");
+      })
+      .addCase(becomeSender.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+        toast.error(action.payload);
       })
 
       .addCase(deleteUser.fulfilled, (state, action) => {
         if (Array.isArray(state.users)) {
           state.users = state.users.filter((u) => u._id !== action.payload);
         }
+        toast.success("User deleted successfully");
       })
       .addCase(deleteUser.rejected, (state, action) => {
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       });
         },
       });

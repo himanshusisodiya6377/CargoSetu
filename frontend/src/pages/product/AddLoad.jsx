@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { createLoad } from "../../redux/features/loadSlice";
 import { Caption, Title } from "../../routes";
-import { commonClassNameOfInput, PrimaryButton } from "../../component/common/Design";
-import { MdMyLocation } from "react-icons/md";
+import { commonClassNameOfInput } from "../../component/common/Design";
 
 const initialState = {
 title: "",
@@ -18,9 +17,16 @@ width: "",
 height: "",
 vehicleType: "",
 cargoType: "",
-bidStartTime: "",
-bidEndTime: "",
+bidDuration: "60",
 };
+
+const BID_DURATIONS = [
+  { value: "30", label: "30 minutes" },
+  { value: "60", label: "1 hour" },
+  { value: "120", label: "2 hours" },
+  { value: "360", label: "6 hours" },
+  { value: "1440", label: "24 hours" },
+];
 
 const AddLoad = () =>{
 
@@ -30,28 +36,10 @@ const navigate = useNavigate();
 const [load,setLoad] = useState(initialState);
 const [images, setImages] = useState([]);
 const [previewImages,setPreviewImages] = useState([]);
-const [pickupCoords, setPickupCoords] = useState({ lat: null, lng: null });
-const [coordsStatus,setCoordsStatus] = useState(""); //"detecting" | "detected" | "failed"
- 
+
 const {isSuccess} = useSelector((state) => state.load);
 
-const detectPickupLocation = ()=>{
-  if(!navigator.geolocation){
-    setCoordsStatus("failed");
-    return;
-  }
-  setCoordsStatus("detecting");
-  navigator.geolocation.getCurrentPosition(
-    (pos) =>{
-      setPickupCoords({lat: pos.coords.latitude, lng: pos.coords.longitude});
-      setCoordsStatus("detected");
-    },
-    () =>setCoordsStatus("failed"),
-    {timeout: 8000}
-  );
-};
-
-const {title,maxBudget,description,pickupLocation,dropLocation,weight,length,width,height,vehicleType,cargoType,bidStartTime,bidEndTime} = load;
+const {title,maxBudget,description,pickupLocation,dropLocation,weight,length,width,height,vehicleType,cargoType,bidDuration} = load;
 
 const handleInputChange = (e) =>{
 const {name,value} = e.target;
@@ -68,17 +56,12 @@ setPreviewImages(previews);
 
 const handleSubmit = (e)=>{
 e.preventDefault();
-  console.log("Form data before send:", {title,length,width,height,weight});
 const formData = new FormData();
 
 formData.append("title", title || "");
 formData.append("description", description || "");
 formData.append("pickupLocation", pickupLocation || "");
 formData.append("dropLocation", dropLocation || "");
-if(pickupCoords.lat !==null && pickupCoords.lng !==null){
-  formData.append("pickupLat", pickupCoords.lat);
-  formData.append("pickupLng", pickupCoords.lng);
-}
 formData.append("maxBudget", maxBudget || "");
 formData.append("weight", weight || "");
 formData.append("dimensions[length]", length || "");
@@ -86,8 +69,7 @@ formData.append("dimensions[width]", width || "");
 formData.append("dimensions[height]", height || "");
 formData.append("vehicleType", vehicleType);
 formData.append("cargoType", cargoType);
-formData.append("bidStartTime", bidStartTime);
-formData.append("bidEndTime", bidEndTime);
+formData.append("bidDuration", bidDuration);
 
 images.forEach((img) =>{
   formData.append("images", img)});
@@ -99,6 +81,9 @@ useEffect(()=>{
 if(isSuccess){
 navigate("/dashboard");
 }},[isSuccess,navigate]);
+
+const startTime = new Date(Date.now() + 5 * 60 * 1000);
+const endTime = new Date(startTime.getTime() + parseInt(bidDuration || 60) * 60 * 1000);
 
 return (
 <section className="shadow-s1 p-4 sm:p-8 rounded-xl bg-white max-w-6xl mx-auto">
@@ -126,14 +111,6 @@ return (
           onChange={handleInputChange}
           className={commonClassNameOfInput}
         />
-        <button
-          type="button"
-          onClick={detectPickupLocation}
-          className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium"
-        >
-          <MdMyLocation size={14} />
-          {coordsStatus === "detecting" ? "Detecting…" : coordsStatus === "detected" ? `✓ Location captured (${pickupCoords.lat.toFixed(4)}, ${pickupCoords.lng.toFixed(4)})` : coordsStatus === "failed" ? "Could not get location — try again" : "Auto-detect pickup coordinates"}
-        </button>
       </div>
 
       <div>
@@ -244,32 +221,24 @@ return (
       </div>
     </div>
 
-    {/*Bidding Time */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div>
-        <Caption className="mb-2">Bid Start Time</Caption>
-        <input
-          type="datetime-local"
-          name="bidStartTime"
-          value={bidStartTime}
-          onChange={handleInputChange}
-          className={commonClassNameOfInput}
-        />
-      </div>
-
-      <div>
-        <Caption className="mb-2">Bid End Time</Caption>
-        <input
-          type="datetime-local"
-          name="bidEndTime"
-          value={bidEndTime}
-          onChange={handleInputChange}
-          className={commonClassNameOfInput}
-        />
-      </div>
+    <div>
+      <Caption className="mb-2">Bidding Duration</Caption>
+      <select
+        name="bidDuration"
+        value={bidDuration}
+        onChange={handleInputChange}
+        className={commonClassNameOfInput}
+      >
+        {BID_DURATIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      <p className="text-xs text-gray_100 mt-1">
+        Bidding starts ~5 min after posting and runs for {BID_DURATIONS.find(d => d.value === bidDuration)?.label || "1 hour"}.
+        Est. start: {startTime.toLocaleString()} &middot; End: {endTime.toLocaleString()}
+      </p>
     </div>
 
-    {/* Description */}
     <div>
       <Caption className="mb-2">Description</Caption>
       <textarea
@@ -281,7 +250,6 @@ return (
       />
     </div>
 
-    {/* Images */}
     <div>
       <Caption className="mb-2">Cargo Images</Caption>
       <input
@@ -303,9 +271,9 @@ return (
       </div>
     </div>
 
-    <PrimaryButton type="submit" className="rounded-none mt-5">
-      CREATE LOAD
-    </PrimaryButton>
+    <button type="submit" className="w-full bg-green text-white font-semibold rounded-lg px-16 py-3 hover:bg-primary transition shadow-md">
+      POST LOAD
+    </button>
   </form>
 </section>
 );

@@ -66,10 +66,10 @@ export const WinningBidList = ()=>{
     <section className="p-4 sm:p-8 min-h-screen bg-gray-50">
       <div className="mb-8">
         <Title level={3} className="font-bold text-gray-900 mb-2"> 
-          {user?.role === "Sender" ? "📦 Assigned Loads — Track Delivery" : "🏆 Loads You Won"}
+          {user?.role === "Sender" ? "Assigned Loads" : "Loads You Won"}
         </Title>
         <p className="text-gray-600">
-          {user?.role === "Sender" ? "Monitor your shipments and track driver progress in real-time" : "Manage your winning bids and update delivery status"}
+          {user?.role === "Sender" ? "Drivers have been assigned to your loads. Track delivery progress and monitor shipments in real time." : "Manage your winning bids and update delivery status"}
         </p>
       </div>
       {wonLoads?.length === 0 ? (
@@ -82,7 +82,7 @@ export const WinningBidList = ()=>{
             const loadStatus = bid.load?.status || "ASSIGNED";
             return (
               <div key={bid._id} className="border-2 border-gray-100 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden hover:shadow-xl transition-all">
-                <div className={`px-6 py-3 text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2 ${loadStatus === "DELIVERED" ? "bg-gradient-to-r from-green-500 to-green-600": loadStatus === "IN_TRANSIT" ? "bg-gradient-to-r from-yellow-500 to-yellow-600": "bg-gradient-to-r from-blue-500 to-blue-600"}`}>
+                <div className={`px-6 py-3 text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2 ${loadStatus === "DELIVERED" ? "bg-gradient-to-r from-green-500 to-green-600": loadStatus === "IN_TRANSIT" ? "bg-gradient-to-r from-yellow-500 to-yellow-600": loadStatus === "PAYMENT_PENDING" ? "bg-gradient-to-r from-orange-500 to-orange-600": "bg-gradient-to-r from-blue-500 to-blue-600"}`}>
                   {loadStatus === "DELIVERED" && <FiCheckCircle size={18} />}
                   {loadStatus === "IN_TRANSIT" && <FiTruck size={18} />}
                   {loadStatus === "ASSIGNED" && <FiPackage size={18} />}
@@ -136,6 +136,24 @@ export const WinningBidList = ()=>{
 
                       {user?.role === "Driver" && (
                         <div className="mt-6 flex flex-col gap-2">
+                          {bid.commissionPercentage && (
+                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1 text-sm mb-2">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Earnings Breakdown</p>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Bid Amount</span>
+                                <span className="font-medium">₹{bid.amount?.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Platform Fee ({bid.commissionPercentage}%)</span>
+                                <span className="font-medium text-orange-600">-₹{bid.commissionAmount?.toLocaleString()}</span>
+                              </div>
+                              <hr className="border-dashed border-gray-300 my-1" />
+                              <div className="flex justify-between font-semibold text-green-600">
+                                <span>Estimated Earnings</span>
+                                <span>₹{bid.driverAmount?.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          )}
                           {loadStatus === "ASSIGNED" && (
                             <button 
                               onClick={() => handleStatusUpdate(bid.load._id, "IN_TRANSIT")}

@@ -3,6 +3,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import { toast } from "react-toastify";
 import { login } from "../../redux/features/authSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import AuthShell from "./AuthShell";
 
 const initialState = {email: "", password: ""};
@@ -11,6 +12,7 @@ export const Login = ()=>{
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formData, setFormData] = useState(initialState);
+  const [showPassword, setShowPassword] = useState(false);
   const {isLoading, isLoggedIn} = useSelector((state) => state.auth);
 
   const handleChange = (e) =>setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -46,7 +48,12 @@ export const Login = ()=>{
 
         <div>
           <label className={lbl}>Password</label>
-          <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Enter your password" className={inp} />
+          <div className="relative">
+            <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required placeholder="Enter your password" className={`${inp} pr-10`} />
+            <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            </button>
+          </div>
         </div>
 
         <button type="submit" disabled={isLoading} className={btn}>

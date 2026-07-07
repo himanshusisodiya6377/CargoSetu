@@ -1,41 +1,46 @@
 import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getLoads, deleteLoad, sellLoad } from "../../../redux/features/loadSlice";
+import { getUserLoads, deleteLoad, sellLoad } from "../../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../../hooks/useRedirectLoggedOutUser";
 import { FiEye, FiEdit2, FiTrash2, FiPlusCircle } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const STATUS_COLORS = {
-  OPEN:       "bg-blue-100 text-blue-700",
-  BIDDING:    "bg-yellow-100 text-yellow-700",
-  ASSIGNED:   "bg-purple-100 text-purple-700",
-  IN_TRANSIT: "bg-orange-100 text-orange-700",
-  DELIVERED:  "bg-green-100 text-green-700",
+  OPEN:           "bg-blue-100 text-blue-700",
+  BIDDING:        "bg-yellow-100 text-yellow-700",
+  PAYMENT_PENDING:"bg-orange-100 text-orange-700",
+  ASSIGNED:       "bg-purple-100 text-purple-700",
+  IN_TRANSIT:     "bg-orange-100 text-orange-700",
+  DELIVERED:      "bg-green-100 text-green-700",
+  ENDED:          "bg-gray-100 text-gray-600",
 };
 
 const LoadList = () =>{
   useRedirectLoggedOutUser("/login");
   const dispatch = useDispatch();
-  const {loads, isLoading} = useSelector((state) => state.load);
-  const load = loads?.data ?? [];
+  const {userLoads, isLoading} = useSelector((state) => state.load);
+  const load = userLoads?.data ?? [];
 
   useEffect(() =>{
-    dispatch(getLoads());
+    dispatch(getUserLoads());
   },[dispatch]);
 
-  const delProduct =(id)=>{
+  const delLoad =(id)=>{
     if(window.confirm("Are you sure you want to delete this load?")){
-      dispatch(deleteLoad(id));
+      dispatch(deleteLoad(id)).then(() => {
+        dispatch(getUserLoads());
+      });
     }
   };
 
-  const handleSellProduct = async(id)=>{
+  const handleSellLoad = async(id)=>{
     if(!window.confirm("Assign this load to the lowest bidder?")) return;
     try{
       await dispatch(sellLoad(id)).unwrap();
-      dispatch(getLoads());
+      dispatch(getUserLoads());
     }catch(error){
-      console.error(error);
+      toast.error(error || "Failed to assign load");
     }
   };
 
@@ -46,7 +51,7 @@ const LoadList = () =>{
           <h2 className="text-xl font-semibold text-gray-800">My Loads</h2>
           <p className="text-gray_100 text-sm mt-1">Manage all your posted loads.</p>
         </div>
-        <NavLink to="/add" className="flex items-center gap-2 bg-green text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary transition">
+        <NavLink to="/add" className="flex items-center gap-2 bg-green text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-primary transition shadow-md">
           <FiPlusCircle size={16} />
           Post Load
         </NavLink>
@@ -77,34 +82,38 @@ const LoadList = () =>{
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {load.map((product) =>(
-                  <tr key={product._id} className="hover:bg-gray-50">
+                {load.map((item) =>(
+                  <tr key={item._id} className="hover:bg-gray-50">
                     <td className="py-3 px-3 font-medium text-gray-800 max-w-[130px] truncate">
-                      {product.title || "Untitled"}
+                      {item.title || "Untitled"}
                     </td>
                     <td className="py-3 px-3 text-xs text-gray_100">
-                      {product.pickupLocation} → {product.dropLocation}
+                      {item.pickupLocation} → {item.dropLocation}
                     </td>
                     <td className="py-3 px-3 text-center font-medium text-gray-700">
-                      ₹{product.maxBudget ?? "—"}
+                      ₹{item.maxBudget ?? "—"}
                     </td>
-                    <td className="py-3 px-3 text-center">{product.totalBids ?? 0}</td>
+                    <td className="py-3 px-3 text-center">{item.totalBids ?? 0}</td>
                     <td className="py-3 px-3 text-center font-semibold text-green">
-                      {product.currentLowestBid != null ? `₹${product.currentLowestBid}` : "—"}
+                      {item.currentLowestBid != null ? `₹${item.currentLowestBid}` : "—"}
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <span className={`inline-block w-2 h-2 rounded-full ${product.isVerified ? "bg-green-500" : "bg-red-400"}`}></span>
+                      <span className={`inline-block w-2 h-2 rounded-full ${item.isVerified ? "bg-green-500" : "bg-red-400"}`}></span>
                     </td>
                     <td className="py-3 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[product.status] ?? "bg-gray-100 text-gray-600"}`}>
-                        {product.status?.replace("_", " ")}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[item.status] ?? "bg-gray-100 text-gray-600"}`}>
+                        {item.status?.replace("_", " ")}
                       </span>
                     </td>
                     <td className="py-3 px-3 text-center">
-                      {product.status === "ASSIGNED" ? (
-                        <span className="text-xs text-red-400 font-medium">Sold</span>
+                      {item.status === "ASSIGNED" ? (
+                        <span className="text-xs text-green-600 font-medium">Assigned</span>
+                      ) : item.status === "PAYMENT_PENDING" ? (
+                        <span className="text-xs text-orange-500 font-medium">Payment Pending</span>
+                      ) : item.status === "ENDED" ? (
+                        <span className="text-xs text-gray-400 font-medium">Ended</span>
                       ) : (
-                        <button onClick={() => handleSellProduct(product._id)} disabled={!product.isVerified} className={`text-xs px-3 py-1 rounded-lg font-medium transition ${product.isVerified ? "bg-green text-white hover:bg-primary" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
+                        <button onClick={() => handleSellLoad(item._id)} disabled={!item.isVerified} className={`text-xs px-3 py-1 rounded-lg font-medium transition ${item.isVerified ? "bg-green text-white hover:bg-primary" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
                           Sell
                         </button>
                       )}
@@ -112,13 +121,15 @@ const LoadList = () =>{
 
                     <td className="py-3 px-3">
                       <div className="flex items-center justify-center gap-2">
-                        <NavLink to={`/load/${product._id}`} className="text-gray-400 hover:text-green" title="View">
+                        <NavLink to={`/load/${item._id}`} className="text-gray-400 hover:text-green" title="View">
                           <FiEye size={15} />
                         </NavLink>
-                        <NavLink to={`/product/update/${product._id}`} className="text-gray-400 hover:text-green" title="Edit">
-                          <FiEdit2 size={15} />
-                        </NavLink>
-                        <button onClick={() => delProduct(product._id)} disabled={product.status === "ASSIGNED" || (product.totalBids ?? 0)>0} title={(product.totalBids ?? 0) > 0 ? "Cannot delete: bids placed" : "Delete"} className={`${product.status === "ASSIGNED" || (product.totalBids ?? 0) > 0 ? "text-gray-300 cursor-not-allowed" : "text-gray-400 hover:text-red-500"}`}>
+                        {item.status === "OPEN" && (item.totalBids ?? 0) === 0 && (
+                          <NavLink to={`/load/update/${item._id}`} className="text-gray-400 hover:text-green" title="Edit">
+                            <FiEdit2 size={15} />
+                          </NavLink>
+                        )}
+                        <button onClick={() => delLoad(item._id)} disabled={["ASSIGNED", "PAYMENT_PENDING"].includes(item.status) || (item.totalBids ?? 0)>0} title={(item.totalBids ?? 0) > 0 ? "Cannot delete: bids placed" : "Delete"} className={`${["ASSIGNED", "PAYMENT_PENDING"].includes(item.status) || (item.totalBids ?? 0) > 0 ? "text-gray-300 cursor-not-allowed" : "text-gray-400 hover:text-red-500"}`}>
                           <FiTrash2 size={15} />
                         </button>
                       </div>

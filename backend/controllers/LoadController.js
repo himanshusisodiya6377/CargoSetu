@@ -8,13 +8,18 @@ const createLoad = async(req, res) =>{
 
     // console.log(req.body);
 
-    const { title,maxBudget,description,pickupLocation,dropLocation,weight,dimensions,vehicleType,cargoType,bidStartTime,bidEndTime} = req.body;
+    let { title,maxBudget,description,pickupLocation,dropLocation,weight,dimensions,vehicleType,cargoType,bidDuration } = req.body;
 
-    if (!title || !maxBudget || !description || !pickupLocation || !dropLocation || !weight || !vehicleType || !bidStartTime || !bidEndTime) {
+    if (!title || !maxBudget || !description || !pickupLocation || !dropLocation || !weight || !vehicleType) {
       return res.status(400).json({
         message: "Please fill all required fields",
       });
     }
+
+    bidDuration = parseInt(bidDuration, 10) || 60;
+    const now = new Date();
+    const bidStartTime = new Date(now.getTime() + 5 * 60 * 1000);
+    const bidEndTime = new Date(bidStartTime.getTime() + bidDuration * 60 * 1000);
 
     let images = [];
 
@@ -37,7 +42,7 @@ const createLoad = async(req, res) =>{
     }
 
     const load = await Load.create({ sender: req.user._id,title,maxBudget,description,pickupLocation,dropLocation,weight,dimensions,vehicleType,
-      cargoType,bidStartTime,bidEndTime,images,status: "OPEN"});
+      cargoType,bidDuration,bidStartTime,bidEndTime,images,status: "OPEN"});
 
     return res.status(201).json({
       success: true,
@@ -54,7 +59,7 @@ const createLoad = async(req, res) =>{
 
 const getAllLoads = async (req, res)=>{
   try {
-    const loads = await Load.find({status: { $in: ["OPEN", "BIDDING"]}}).sort({createdAt: -1}).populate("sender", "name email");
+    const loads = await Load.find({status: "BIDDING"}).sort({createdAt: -1}).populate("sender", "name email");
 
     const loadsWithDetails = loads.map((load)=>{
       return{
@@ -125,9 +130,8 @@ const updateLoad = async (req, res)=>{
     const {id} = req.params;
     // console.log(id);
 
-    const {title,description,pickupLocation,dropLocation,weight,vehicleType,cargoType,maxBudget,bidStartTime,bidEndTime}=req.body;
+    let {title,description,pickupLocation,dropLocation,weight,vehicleType,cargoType,maxBudget,bidDuration}=req.body;
 
-    // console.log(req.body)
     const load = await Load.findById(id);
 
     if(!load){
@@ -138,20 +142,12 @@ const updateLoad = async (req, res)=>{
       return res.status(403).json({message: "Not authorized"});
     }
 
-    // Validate bid times
-    if(bidStartTime && bidEndTime && new Date(bidEndTime) <= new Date(bidStartTime)){
-      return res.status(400).json({
-        message: "Bid end time must be after bid start time",
-      })}
-
-    // Prevent update if bids already placed
-    if(load.bids.length > 0){
+    if(load.bids && load.bids.length > 0){
       return res.status(400).json({
         message: "Cannot update load after bids are placed",
       })}
 
-    // Prevent update after bidding starts
-    if(Date.now() >= load.bidStartTime.getTime()){
+    if(Date.now() >= load.bidStartTime?.getTime()){
       return res.status(400).json({
         message: "Cannot update load after bidding has started",
       })}
@@ -166,8 +162,17 @@ const updateLoad = async (req, res)=>{
     if(maxBudget !== undefined && maxBudget !== ""){
         load.maxBudget = Number(maxBudget);
         }
-    if(bidStartTime !== undefined) load.bidStartTime = bidStartTime;
-    if(bidEndTime !== undefined) load.bidEndTime = bidEndTime;
+    if(bidDuration !== undefined){
+      const duration = parseInt(bidDuration, 10);
+      if(!isNaN(duration) && duration > 0){
+        const now = new Date();
+        const newStart = new Date(now.getTime() + 5 * 60 * 1000);
+        const newEnd = new Date(newStart.getTime() + duration * 60 * 1000);
+        load.bidDuration = duration;
+        load.bidStartTime = newStart;
+        load.bidEndTime = newEnd;
+      }
+    }
     
        if(req.body["dimensions[length]"] !== undefined || req.body["dimensions[width]"] !== undefined || req.body["dimensions[height]"] !== undefined) {
       load.dimensions ={
@@ -406,11 +411,9 @@ const getActiveLoads = async(req, res)=>{
     let loads;
 
     if(role === "Sender"){
-      //Sender sees their own loads that are open for bidding
-      loads = await Load.find({sender: userId, status: {$in: ["OPEN", "BIDDING"] },isVerified: true}).sort({ bidEndTime: 1});
+      loads = await Load.find({sender: userId, status: "BIDDING"}).sort({ bidEndTime: 1});
     }else if(role === "Driver"){
-      // Driver sees all loads open for bidding (verified and unverified)
-      loads = await Load.find({status: {$in: ["OPEN", "BIDDING"] }}).populate("sender", "name email photo").sort({ bidEndTime: 1});
+      loads = await Load.find({status: "BIDDING"}).populate("sender", "name email photo").sort({ bidEndTime: 1});
     }else{
       return res.status(403).json({message: "Access denied"});
     }
@@ -440,9 +443,9 @@ const getCompletedUserLoads = async(req, res)=>{
     let loads;
 
     if(role === "Sender"){
-      loads = await Load.find({sender: userId, status: "DELIVERED"}).populate("assignedDriver","name email phone photo vehicleType").sort({updatedAt: -1});
+      loads = await Load.find({sender: userId, status: { $in: ["ASSIGNED", "ENDED", "DELIVERED"] }}).populate("assignedDriver","name email phone photo vehicleType").sort({updatedAt: -1});
     }else if(role === "Driver"){
-      loads = await Load.find({ assignedDriver: userId, status: "DELIVERED"}).populate("sender", "name email phone photo").sort({ updatedAt: -1});
+      loads = await Load.find({ assignedDriver: userId, status: { $in: ["ASSIGNED", "ENDED", "DELIVERED"] }}).populate("sender", "name email phone photo").sort({ updatedAt: -1});
     }else{
       return res.status(403).json({ message: "Access denied" });
     }

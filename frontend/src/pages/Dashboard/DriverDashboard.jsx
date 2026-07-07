@@ -10,6 +10,7 @@ import { BsCashCoin } from "react-icons/bs";
 import { MdOutlineGavel } from "react-icons/md";
 
 const STATUS_COLORS ={
+  PAYMENT_PENDING: "bg-orange-100 text-orange-700",
   ASSIGNED:   "bg-purple-100 text-purple-700",
   IN_TRANSIT: "bg-orange-100 text-orange-700",
   DELIVERED:  "bg-green-100 text-green-700",
@@ -50,7 +51,17 @@ export const DriverDashboard = ()=>{
     return {won,inTransit,delivered,bidsPlaced};
   },[wonLoads, completedLoads, myBids]);
 
-  const recentWon = useMemo(() => (wonLoads ?? []).slice(0, 5), [wonLoads]);
+  const recentWon = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    return (wonLoads ?? []).filter((bid) => {
+      const d = new Date(bid.createdAt || bid.bidTime || bid.updatedAt);
+      return d >= yesterday && d < new Date(today.getTime() + 86400000);
+    }).slice(0, 5);
+  }, [wonLoads]);
 
   const handleStatusUpdate = (loadId, status)=>{
     const label = status === "IN_TRANSIT" ? "mark as In Transit" : "mark as Delivered";

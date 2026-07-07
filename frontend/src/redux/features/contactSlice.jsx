@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import contactService from "../services/contactService";
+import { toast } from "react-toastify";
 
 export const sendContactMessage = createAsyncThunk(
   "contact/send",
@@ -41,11 +42,13 @@ const contactSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.message = action.payload.message;
+        toast.success("Message sent! We'll get back to you soon.");
       })
       .addCase(sendContactMessage.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+        toast.error(action.payload);
       });
   },
 });

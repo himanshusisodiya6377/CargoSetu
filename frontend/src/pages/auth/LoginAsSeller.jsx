@@ -3,6 +3,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import { toast } from "react-toastify";
 import { loginUserAsSeller, RESET } from "../../redux/features/authSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Container, Title, Body, Caption, Loader } from "../../routes/index";
 
 const initialState = { email: "", password: "" };
@@ -11,6 +12,7 @@ export const LoginAsSeller = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formData, setFormData] = useState(initialState);
+  const [showPassword, setShowPassword] = useState(false);
   const { isLoading, isSuccess, isError, message } = useSelector((state) => state.auth);
 
   const handleChange = (e) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -61,10 +63,15 @@ export const LoginAsSeller = () => {
                   <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@example.com" className={inp} />
                 </div>
 
-                <div>
-                  <label className={lbl}>Password</label>
-                  <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Enter your password" className={inp} />
-                </div>
+                  <div>
+                    <label className={lbl}>Password</label>
+                    <div className="relative">
+                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required placeholder="Enter your password" className={`${inp} pr-10`} />
+                      <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </button>
+                    </div>
+                  </div>
 
                 <button type="submit" disabled={isLoading} className={btn}>
                   {isLoading ? "Logging in..." : "Login as Seller"}
