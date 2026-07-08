@@ -1,250 +1,299 @@
-🚛 CargoSetu
+# CargoSetu 🚛
 
-CargoSetu is a full-stack reverse-auction freight marketplace connecting shippers with drivers. Senders post loads (cargo needing transport), verified drivers compete by bidding — but unlike a normal auction, the lowest bid wins. Once bidding closes, payment is handled through Razorpay, the platform takes a commission, and the shipment is tracked from pickup through delivery.
+### Smart Logistics & Freight Bidding Platform
 
-Built with the MERN stack (MongoDB, Express, React, Node.js).
+CargoSetu is a full-stack logistics marketplace that connects **Senders** with **Truck Drivers** through a transparent bidding system. Instead of manually searching for transporters, senders can post freight loads, receive competitive bids from verified drivers, compare offers, and finalize the shipment securely.
 
+The platform streamlines freight booking, bidding, payment, shipment tracking, and user management while providing role-based access for **Admin**, **Sender**, and **Driver**.
 
-Table of Contents
+---
 
+## ✨ Features
 
-Overview
-Features
-Tech Stack
-Architecture
-Project Structure
-Getting Started
+### 👤 Authentication & User Management
 
-Prerequisites
-Installation
-Environment Variables
-Running the App
+* Secure user registration and login
+* JWT-based authentication
+* Role-based authorization (Admin, Sender, Driver)
+* Profile management
+* Become a Sender functionality
+* User profile image upload
+* Protected routes
+* Rate-limited authentication APIs
 
+---
 
+### 📦 Load Management
 
-API Overview
-User Roles
-Load Lifecycle
-Known Limitations
-Roadmap
-License
+* Create freight loads
+* Update existing loads
+* Delete loads
+* View all available loads
+* View active loads
+* View completed loads
+* View personal posted loads
+* Upload multiple load images
+* Admin load management
 
+---
 
+### 💰 Live Bidding System
 
-Overview
+* Drivers can place bids on loads
+* Update existing bids
+* Delete bids
+* View bidding history
+* Finalize winning bid
+* View won loads
+* Driver bidding dashboard
+* Admin bid management
 
-Traditional freight pricing is opaque — shippers often overpay because they don't know the market rate, and drivers underprice out of desperation for work. CargoSetu solves this with a reverse auction: shippers post a load with a maximum budget, drivers bid downward within a fixed bidding window, and the lowest bidder wins the job — creating price transparency for both sides.
+---
 
-Features
+### 🚚 Shipment Tracking
 
+* Real-time shipment status updates
+* Driver tracking status updates
+* Active shipment management
+* Completed shipment history
 
-🔐 JWT-based authentication with role-based access (Admin / Sender / Driver)
-📦 Load posting with images (Cloudinary), dimensions, weight, vehicle & cargo type
-💰 Reverse-auction bidding with an automatically timed bidding window (opened/closed by a scheduled cron job)
-💳 Razorpay payment integration with HMAC signature verification
-📊 Admin commission engine — configurable commission %, snapshotted per transaction
-🚚 Shipment tracking — Assigned → In Transit → Delivered
-⭐ Two-way rating system between senders and drivers after completed shipments
-📈 Admin revenue dashboard with commission/earnings breakdown
-📧 Automated email notifications for bid placed, bid won, load assigned, delivery confirmation
-📱 Responsive UI built with Tailwind CSS
+---
 
+### 💳 Secure Payments
 
-Tech Stack
+* Razorpay payment integration
+* Secure payment verification
+* Payment history
+* Payment details for every shipment
 
-Frontend
+---
 
+### ⭐ Rating & Reviews
 
-React 19, React Router 7
-Redux Toolkit + React-Redux (state management)
-Axios (API calls)
-Tailwind CSS
-Vite (build tool)
-React Toastify (notifications)
+* Rate completed shipments
+* Public user profiles
+* Driver ratings
+* Sender ratings
+* Reputation-based trust system
 
+---
 
-Backend
+### 📈 Admin Dashboard
 
+* Manage users
+* Manage loads
+* Manage bids
+* Commission configuration
+* Revenue dashboard
+* Enable/Disable bidding
+* Delete inappropriate content
 
-Node.js + Express 5
-MongoDB + Mongoose 9
-JSON Web Tokens (JWT) + bcryptjs
-Multer + Cloudinary (image uploads)
-Razorpay (payments)
-Nodemailer (transactional email)
-node-cron (scheduled load status transitions)
-express-rate-limit (auth throttling)
+---
 
+### 📧 Contact System
 
-Architecture
+* Contact form submission
+* Customer support requests
 
-┌─────────────┐        REST/JSON         ┌──────────────┐        ┌──────────────┐
-│   React SPA │ ───────────────────────▶ │  Express API │ ─────▶ │   MongoDB    │
-│ (Redux Tk)  │ ◀─────────────────────── │              │ ◀───── │              │
-└─────────────┘   cookies + JWT auth     └──────┬───────┘        └──────────────┘
-                                                 │
-                        ┌────────────────────────┼───────────────────────┐
-                        ▼                        ▼                       ▼
-                  ┌──────────┐            ┌─────────────┐         ┌─────────────┐
-                  │Cloudinary│            │  Razorpay   │         │  Nodemailer │
-                  │ (images) │            │ (payments)  │         │  (SMTP)     │
-                  └──────────┘            └─────────────┘         └─────────────┘
+---
 
-A node-cron job inside the Express process ticks every minute to open/close
-bidding windows and transition Load status automatically.
+## 🛠 Tech Stack
 
-Layered backend structure: routes → middleware (auth/role guards) → controllers → models.
+### Frontend
 
-Project Structure
+* React.js
+* React Router
+* Redux Toolkit
+* Axios
+* React Toastify
+* React Icons
+* Tailwind CSS
+* Vite
 
-CargoSetu/
-├── backend/
-│   ├── config/          # DB, Cloudinary, Razorpay setup
-│   ├── controllers/     # Business logic (Load, User, Bidding, Payment, Commission, Rating, Contact)
-│   ├── middleWare/       # auth, role guards, rate limiting, error handler
-│   ├── models/           # Mongoose schemas (User, Load, Bid, Payment, Rating, CommissionConfig)
-│   ├── routes/            # Express route definitions
-│   ├── services/          # Email service
-│   ├── utils/              # File upload, commission calc, password validation
-│   └── server.js           # App entry point + cron scheduler
+### Backend
+
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* JWT Authentication
+* Multer
+* Cloudinary
+* Razorpay
+* Nodemailer
+* Express Rate Limit
+* Node Cron
+
+---
+
+## 📂 Project Structure
+
+```text
+CargoSetu
 │
-├── frontend/
-│   ├── src/
-│   │   ├── admin/         # Admin dashboards (revenue, users, load management)
-│   │   ├── component/      # Reusable UI components (cards, header, footer, layouts)
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── pages/            # Route-level pages (auth, dashboards, load pages)
-│   │   ├── redux/              # Slices + service (axios) layer
-│   │   ├── routes/               # Route config + PrivateRoute guard
-│   │   └── utils/                  # Helpers (URL config, validation, formatting)
+├── frontend
+│   ├── src
+│   ├── public
+│   ├── package.json
 │   └── vite.config.js
 │
-└── package.json           # Root convenience scripts
+├── backend
+│   ├── config
+│   ├── controllers
+│   ├── middleware
+│   ├── models
+│   ├── routes
+│   ├── services
+│   ├── utils
+│   ├── uploads
+│   └── server.js
+│
+└── package.json
+```
 
-Getting Started
+---
 
-Prerequisites
+## 🔐 User Roles
 
+### Sender
 
-Node.js 18+
-npm
-A MongoDB instance (local or MongoDB Atlas)
-Accounts/API keys for: Cloudinary, Razorpay, and an SMTP provider (e.g., Gmail App Password, SendGrid)
+* Post freight loads
+* Edit/Delete own loads
+* View received bids
+* Accept winning bid
+* Make shipment payments
+* Rate drivers
 
+### Driver
 
-Installation
+* Browse available loads
+* Place bids
+* Update/Delete bids
+* Track shipments
+* View won loads
+* Receive ratings
 
-bashgit clone <your-repo-url>
+### Admin
+
+* Manage users
+* Manage loads
+* Manage bids
+* Configure commission
+* Monitor revenue
+* Moderate platform activities
+
+---
+
+## 🚀 Getting Started
+
+### Clone Repository
+
+```bash
+git clone <repository-url>
 cd CargoSetu
+```
 
-# Install backend dependencies
+---
+
+### Backend Setup
+
+```bash
 cd backend
+
 npm install
 
-# Install frontend dependencies
-cd ../frontend
+npm start
+```
+
+---
+
+### Frontend Setup
+
+```bash
+cd frontend
+
 npm install
 
-Environment Variables
+npm run dev
+```
 
-Create a backend/.env file:
+---
 
-env# Server
-PORT=5000
-CLIENT_URL=http://localhost:5173
+## 🔑 Environment Variables
 
-# Database
-MONGODB_URI=your_mongodb_connection_string
+### Backend (.env)
 
-# Auth
-JWT_SECRET=your_jwt_secret
+```env
+PORT=
 
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+MONGO_URI=
 
-# Razorpay
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+JWT_SECRET=
 
-# Email (SMTP)
-SMTP_HOST=your_smtp_host
-SMTP_PORT=587
-SMTP_USER=your_smtp_user
-SMTP_PASS=your_smtp_password
-SMTP_FROM_NAME=CargoSetu
-SMTP_FROM_EMAIL=no-reply@yourdomain.com
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 
-# Business config
-COMMISSION_PERCENTAGE=5
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
 
-Create a frontend/.env file:
+EMAIL=
+EMAIL_PASSWORD=
+```
 
-envVITE_BACKEND_URL=http://localhost:5000/api
-VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
+### Frontend (.env)
 
+```env
+VITE_BACKEND_URL=
+```
 
-⚠️ Never commit .env files. Both are already excluded via .gitignore — double check no real secrets are checked into git history before pushing this repo publicly.
+---
 
+## 🔄 Application Workflow
 
+1. User registers and logs in.
+2. A sender posts a freight load with shipment details.
+3. Drivers browse available loads and submit competitive bids.
+4. The sender reviews all bids and selects the best offer.
+5. Payment is completed securely through Razorpay.
+6. The assigned driver updates shipment status during transit.
+7. After successful delivery, both parties can rate each other.
+8. Admin monitors platform activity, commissions, and user management.
 
-Running the App
+---
 
-bash# Terminal 1 — backend (from /backend)
-npm run dev          # starts on http://localhost:5000
+## 📌 Key Highlights
 
-# Terminal 2 — frontend (from /frontend)
-npm run dev          # starts on http://localhost:5173
+* Role-Based Access Control (RBAC)
+* RESTful API Architecture
+* JWT Authentication
+* Secure Payment Integration
+* Image Upload Support
+* Freight Bidding Marketplace
+* Shipment Tracking
+* Rating & Review System
+* Admin Revenue Dashboard
+* Commission Management
+* Responsive User Interface
+* Scalable MVC Backend Structure
 
-Build frontend for production:
+---
 
-bashcd frontend
-npm run build         # outputs to frontend/dist
+## 📈 Future Improvements
 
-API Overview
+* Live location tracking using GPS
+* Real-time notifications with WebSockets
+* AI-based freight price prediction
+* Route optimization
+* Multi-language support
+* Mobile application
+* In-app chat between sender and driver
+* Advanced analytics dashboard
+* Email and SMS notifications
+* Digital invoice generation
 
-ResourceBase RouteNotesAuth / Users/api/usersregister, login, profile, admin user managementLoads/api/Loadscreate/browse/update/delete loads, admin verificationBidding/api/biddingplace/update/withdraw bids, finalize winner, tracking updatesPayments/api/paymentsRazorpay order creation + signature verificationCommission/api/commissioncommission config + revenue dashboard (admin)Ratings/api/ratingspost-delivery ratings & public profile ratingsContact/api/contactcontact form submission
+---
 
-All protected routes require a valid JWT, sent via an httpOnly cookie (set automatically on login) or an Authorization: Bearer <token> header.
+## 👨‍💻 Author
 
-User Roles
-
-RoleCapabilitiesSenderPost loads, edit/delete before bidding starts, review bids, finalize a winner, pay, rate the driverDriverBrowse open loads, place/update/withdraw bids, update shipment tracking status, rate the senderAdminVerify loads & set commission, manage users, view/adjust global commission %, view revenue dashboard
-
-Load Lifecycle
-
-OPEN → BIDDING → PAYMENT_PENDING → ASSIGNED → IN_TRANSIT → DELIVERED
-                       ↳ ENDED (if no bids received)
-
-A scheduled job checks every minute for loads whose bidding window should open or close, automatically transitioning status and computing the winning (lowest) bid.
-
-Known Limitations
-
-This is an actively developed portfolio/learning project. Known gaps that would need addressing before a real production launch:
-
-
-No automated test suite yet
-Bid placement/finalization isn't wrapped in database transactions (a rare concurrent-bid race is theoretically possible)
-No CI/CD pipeline or Dockerfile yet
-Single-instance cron scheduling (would need a distributed lock before running multiple server instances)
-No pagination on list endpoints yet
-
-
-Roadmap
-
-
- Real-time bid updates via WebSockets
- Automated test coverage (Jest + Supertest)
- Mongo transactions around the bidding/finalization path
- CI/CD pipeline + Dockerized deployment
- Search/filter/pagination on load listings
- Payment timeout & auto-reassignment for unpaid loads
-
-
-License
-
-This project is available for educational/portfolio purposes. Add a license of your choice (MIT recommended) if open-sourcing.
-
-
-Built by Himanshu — a MERN stack project developed as part of software engineering placement preparation.
+Developed as a full-stack logistics marketplace project to demonstrate modern web development concepts, scalable backend architecture, secure authentication, payment integration, and real-world logistics workflow automation.
