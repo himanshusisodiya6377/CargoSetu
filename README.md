@@ -2,7 +2,7 @@
 
 ### Smart Logistics & Freight Bidding Platform
 
-CargoSetu is a full-stack logistics marketplace that connects **Senders** with **Truck Drivers** through a transparent bidding system. Instead of manually searching for transporters, senders can post freight loads, receive competitive bids from verified drivers, compare offers, and finalize the shipment securely.
+CargoSetu is a full-stack logistics marketplace that connects **Senders** with **Truck Drivers** through a transparent bidding system. Instead of manually searching for transporters, senders can post freight loads, receive competitive bids from drivers, compare offers, and finalize the shipment .
 
 The platform streamlines freight booking, bidding, payment, shipment tracking, and user management while providing role-based access for **Admin**, **Sender**, and **Driver**.
 
@@ -68,16 +68,6 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-### ⭐ Rating & Reviews
-
-* Rate completed shipments
-* Public user profiles
-* Driver ratings
-* Sender ratings
-* Reputation-based trust system
-
----
-
 ### 📈 Admin Dashboard
 
 * Manage users
@@ -85,7 +75,6 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 * Manage bids
 * Commission configuration
 * Revenue dashboard
-* Enable/Disable bidding
 * Delete inappropriate content
 
 ---
@@ -162,7 +151,6 @@ CargoSetu
 * View received bids
 * Accept winning bid
 * Make shipment payments
-* Rate drivers
 
 ### Driver
 
@@ -171,7 +159,6 @@ CargoSetu
 * Update/Delete bids
 * Track shipments
 * View won loads
-* Receive ratings
 
 ### Admin
 
@@ -257,8 +244,7 @@ VITE_BACKEND_URL=
 4. The sender reviews all bids and selects the best offer.
 5. Payment is completed securely through Razorpay.
 6. The assigned driver updates shipment status during transit.
-7. After successful delivery, both parties can rate each other.
-8. Admin monitors platform activity, commissions, and user management.
+7. Admin monitors platform activity, commissions, and user management.
 
 ---
 
