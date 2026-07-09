@@ -1,5 +1,5 @@
 const express = require("express");
-const { auth, isAdmin, isSender } = require("../middleWare/authMiddleware");
+const { auth, isAdmin, isSender } = require("../middleware/authMiddleware");
 const router = express.Router();
 const { upload } = require("../utils/fileUpload");
 const {createLoad,getAllLoads,deleteLoad,updateLoad,getAllLoadsOfUser,getAllLoadsByAdmin,deleteLoadsByAdmin,deleteLoadByAdmin,getLoadById, getCompletedUserLoads, getActiveLoads}=require("../controllers/LoadController");

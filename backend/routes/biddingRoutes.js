@@ -1,6 +1,6 @@
 const express = require("express");
 const {getBiddingHistory,placeBid, getWinningBids, updateTrackingStatus, getMyBids, updateBid, deleteBid, deleteBidByAdmin} = require("../controllers/biddingController");
-const { auth, isSender, isDriver, isAdmin } = require("../middleWare/authMiddleware");
+const { auth, isSender, isDriver, isAdmin } = require("../middleware/authMiddleware");
 const router = express.Router();
 
 router.get("/won", auth, getWinningBids);

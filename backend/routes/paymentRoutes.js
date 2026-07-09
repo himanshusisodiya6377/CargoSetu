@@ -1,5 +1,5 @@
 const express = require("express");
-const { auth } = require("../middleWare/authMiddleware");
+const { auth } = require("../middleware/authMiddleware");
 const { createRazorpayOrder, verifyPayment, getPaymentDetails, getPaymentHistory } = require("../controllers/paymentController");
 const router = express.Router();
 

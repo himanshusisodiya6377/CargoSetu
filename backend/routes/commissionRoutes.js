@@ -1,5 +1,5 @@
 const express = require("express");
-const { auth, isAdmin } = require("../middleWare/authMiddleware");
+const { auth, isAdmin } = require("../middleware/authMiddleware");
 const { getCommissionConfig, updateCommissionConfig, getRevenueDashboard } = require("../controllers/commissionController");
 const router = express.Router();
 

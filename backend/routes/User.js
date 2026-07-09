@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const {auth,isAdmin}=require("../middleWare/authMiddleware");
+const {auth,isAdmin}=require("../middleware/authMiddleware");
 const { upload } = require("../utils/fileUpload");
-const authRateLimit = require("../middleWare/authRateLimit");
+const authRateLimit = require("../middleware/authRateLimit");
 const { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserBalance,getUserProfile,getAllUser,estimateIncome, updateUserProfile, deleteUser, becomeSender } = require("../controllers/UserController");
 
 router.post("/register", authRateLimit, registerUser);
