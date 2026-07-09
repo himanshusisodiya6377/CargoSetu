@@ -8,7 +8,6 @@ export const useUserProfile = () => {
   const role = user?.role || null;
   const balance = user?.balance || 0;
   const commission = user?.commissionBalance || 0;
-  // console.log(user)
 
   return {user,role,balance,commission,isLoggedIn,isLoading,};
 };

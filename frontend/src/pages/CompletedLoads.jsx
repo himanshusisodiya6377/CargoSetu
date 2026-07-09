@@ -19,7 +19,7 @@ const CompletedLoads = () =>{
       <div className="shadow-s1 p-6 rounded-lg">
         <h2 className="text-xl font-semibold text-gray-800">Completed Loads</h2>
         <p className="text-sm text-gray-400 mt-1">
-          {user?.role === "Driver" ? "Loads you have won or delivered." : "Your loads that are assigned, ended, or delivered."}
+          {user?.role === "Driver" ? "Loads you have successfully delivered." : "Your loads that are assigned, ended, or delivered."}
         </p>
       </div>
 

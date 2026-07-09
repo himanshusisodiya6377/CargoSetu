@@ -82,7 +82,7 @@ if(isSuccess){
 navigate("/dashboard");
 }},[isSuccess,navigate]);
 
-const startTime = new Date(Date.now() + 5 * 60 * 1000);
+const [startTime] = useState(() => new Date(Date.now() + 5 * 60 * 1000));
 const endTime = new Date(startTime.getTime() + parseInt(bidDuration || 60) * 60 * 1000);
 
 return (

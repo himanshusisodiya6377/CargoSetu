@@ -11,7 +11,7 @@ import { LoginAsSender } from "./pages/auth/LoginAsSender";
 import UserList from "./admin/UserList";
 import AddLoad from "./pages/product/AddLoad";
 import { LoadEdit } from "./pages/product/LoadEdit";
-import {LoadDetailsPage} from "../src/pages/product/LoadDetailsPage"
+import {LoadDetailsPage} from "./pages/product/LoadDetailsPage"
 import WinningBidList from "./pages/product/WinningBidList";
 import ActiveLoads from "./pages/ActiveLoads";
 import MyBids from "./pages/product/MyBids";

@@ -106,17 +106,6 @@ export const updateLoad = createAsyncThunk(
   }
 );
 
-export const sellLoad = createAsyncThunk(
-  "loads/sell",
-  async (id, thunkAPI) => {
-    try {
-      return await loadService.sellLoad(id);
-    } catch (error) {
-      return thunkAPI.rejectWithValue(getErrorMessage(error));
-    }
-  }
-);
-
 export const placeBid = createAsyncThunk(
   "loads/bid",
   async ({ id, amount }, thunkAPI) => {
@@ -223,14 +212,6 @@ export const deleteAdminLoad = createAsyncThunk(
   }
 );
 
-export const verifyAdminLoad = createAsyncThunk(
-  "loads/verifyAdminLoad",
-  async ({ id, commission }, thunkAPI) => {
-    try { return await loadService.verifyLoad(id, commission); }
-    catch (error) { return thunkAPI.rejectWithValue(getErrorMessage(error)); }
-  }
-);
-
 export const deleteBidAdmin = createAsyncThunk(
   "loads/deleteBidAdmin",
   async (id, thunkAPI) => {
@@ -328,7 +309,7 @@ const loadSlice = createSlice({
         toast.error(action.payload);
       })
 
-  .addCase(deleteLoad.pending, (state) => {
+  .addCase(deleteLoad.pending, () => {
       })
   .addCase(deleteLoad.fulfilled, (state, action) => {
   const id = action.payload.id || action.payload._id || action.meta.arg;
@@ -397,41 +378,11 @@ const loadSlice = createSlice({
         toast.error(action.payload);
       })
 
-  .addCase(placeBid.pending, (state) =>{
+  .addCase(placeBid.pending, () =>{
       })
-  .addCase(placeBid.fulfilled, (state, action) =>{
+  .addCase(placeBid.fulfilled, () =>{
 })
   .addCase(placeBid.rejected, (state,action) =>{
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-        toast.error(action.payload);
-      })
-
-  .addCase(sellLoad.fulfilled, (state,action) =>{
-
-  const updatedLoad = action.payload.data;
-
-  if (Array.isArray(state.loads)) {
-    state.loads = state.loads.map((item) =>
-      item._id === updatedLoad._id ? updatedLoad : item
-    );
-  }
-
-  if (Array.isArray(state.userLoads)) {
-    state.userLoads = state.userLoads.map((item) =>
-      item._id === updatedLoad._id ? updatedLoad : item
-    );
-  } else if (state.userLoads?.data) {
-    state.userLoads.data = state.userLoads.data.map((item) =>
-      item._id === updatedLoad._id ? updatedLoad : item
-    );
-  }
-
-  toast.success("Winner selected. Proceed to payment.");
-
-})
-  .addCase(sellLoad.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
@@ -559,17 +510,6 @@ const loadSlice = createSlice({
   toast.success("Load deleted!");
 })
 .addCase(deleteAdminLoad.rejected, (state, action) =>{
-  toast.error(action.payload);
-})
-
-.addCase(verifyAdminLoad.fulfilled, (state,action) =>{
-  const updated = action.payload.data;
-  state.adminLoads = state.adminLoads.map((l) =>
-    l._id === updated._id ? { ...l, ...updated } : l
-  );
-  toast.success("Load verified and commission set!");
-})
-.addCase(verifyAdminLoad.rejected, (state, action) =>{
   toast.error(action.payload);
 })
 

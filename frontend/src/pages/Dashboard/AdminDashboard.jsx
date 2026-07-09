@@ -7,7 +7,6 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import { FiUsers, FiPackage, FiEye } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
 import { BsCashCoin } from "react-icons/bs";
-import { User2 } from "../../component/hero/Hero";
 
 const ROLE_COLORS ={
   Sender: "bg-blue-100 text-blue-700",
@@ -93,7 +92,7 @@ export const AdminDashboard = () =>{
               {recentUsers.map((u) => (
                 <div key={u._id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img src={u.photo || User2} alt={u.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    <img src={u.photo || "https://cdn-icons-png.flaticon.com/512/2202/2202112.png"} alt={u.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-800 capitalize">{u.name}</p>
                       <p className="text-xs text-gray_100">{u.email}</p>

@@ -1,13 +1,14 @@
 import { Body, Caption, Container, Title } from "../../routes/index";
 import { commonClassNameOfInput } from "../../component/common/Design";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { getLoad, placeBid, sellLoad, updateTracking } from "../../redux/features/loadSlice";
-import { createPaymentOrder, verifyPayment, fetchPaymentDetails, resetPayment } from "../../redux/features/paymentSlice";
+import { getLoad, placeBid, updateTracking } from "../../redux/features/loadSlice";
+import { createPaymentOrder, verifyPayment, fetchPaymentDetails } from "../../redux/features/paymentSlice";
 import { toast } from "react-toastify";
 import { FiPackage, FiTruck, FiCheckCircle, FiCreditCard, FiCheck } from "react-icons/fi";
 import { BACKEND_URL } from "../../utils/url";
+import { useSSE } from "../../hooks/useSSE";
 
 const STEPS = [
   { key: "ASSIGNED",   label: "Assigned",   Icon: FiPackage },
@@ -63,11 +64,9 @@ export const LoadDetailsPage = () =>{
 
   const {id} = useParams();
   const dispatch = useDispatch();
-  const pollingIntervalRef = useRef(null);
 
   const {load, isLoading} = useSelector((state) => state.load);
   const {user} = useSelector((state) => state.auth);
-  const { payment: reduxPayment } = useSelector((state) => state.payment);
 
   const fetchBids = async () =>{
     try {
@@ -77,9 +76,24 @@ export const LoadDetailsPage = () =>{
       const data = await response.json();
       if (data.data) setBids(data.data);
     } catch (err) {
-      //silent — polling will retry
+      console.error("Failed to fetch bids:", err);
     }
   };
+
+  useSSE(id, {
+    newBid: (event) => {
+      setBids((prev) => {
+        const exists = prev.some((b) => b._id === event.bid._id);
+        if (exists) return prev;
+        return [...prev, event.bid].sort(
+          (a, b) => new Date(b.createdAt || b.bidTime) - new Date(a.createdAt || a.bidTime)
+        );
+      });
+    },
+    loadStatusChange: (event) => {
+      dispatch(getLoad(id));
+    },
+  });
 
   useEffect(() =>{
     if(id){
@@ -96,13 +110,6 @@ export const LoadDetailsPage = () =>{
     }
   }, [id, load?.status, dispatch]);
 
-  //Poll for new bids every 8 seconds while auction is live
-  useEffect(() =>{
-    if(!id || !load?.bidEndTime) return;
-    pollingIntervalRef.current = setInterval(fetchBids, 8000);
-    return () => clearInterval(pollingIntervalRef.current);
-  }, [id, load?.bidEndTime]);
-
   // Countdown logic
   useEffect(() =>{
     if(!load?.bidEndTime) return;
@@ -114,7 +121,6 @@ export const LoadDetailsPage = () =>{
 
       if(distance <= 0){
         clearInterval(interval);
-        clearInterval(pollingIntervalRef.current);
         setTimeLeft((prev) =>({...prev, ended: true}));
         return;
       }
@@ -223,13 +229,6 @@ export const LoadDetailsPage = () =>{
     }
     setIsLoadingBid(false)};
 
-  const handleAssignDriver = (loadId)=>{
-    if(window.confirm("Select the lowest bidder for this load?")){
-      dispatch(sellLoad(loadId)).then(() => {
-        dispatch(getLoad(loadId));
-      });
-    }};
-
   const handleTrackingUpdate = (loadId, status)=>{
   const label = status === "IN_TRANSIT" ? "mark as In Transit" : "mark as Delivered";
   if(window.confirm(`Are you sure you want to ${label}?`)){
@@ -242,7 +241,7 @@ export const LoadDetailsPage = () =>{
 
   const auctionEndUTC = load?.bidEndTime ? new Date(load.bidEndTime).toUTCString() : null;
 
-  const sortedBids =bids && bids.length > 0  ? [...bids].sort((a, b) => new Date(b.createdAt || b.bidTime) - new Date(a.createdAt || a.bidTime)) : [];
+  const sortedBids = Array.isArray(bids) && bids.length > 0  ? [...bids].sort((a, b) => new Date(b.createdAt || b.bidTime) - new Date(a.createdAt || a.bidTime)) : [];
 
   const lowestBid = sortedBids.length > 0 ? Math.min(...sortedBids.map(b => b.amount)) : null;
   return (
@@ -258,16 +257,16 @@ export const LoadDetailsPage = () =>{
 
           <div className="lg:w-1/2">
             <Title level={2}>{load?.title}</Title>
-            <Body className="mt-3">
-              {load?.description?.slice(0, 150)}
-            </Body>
-            <div className="flex flex-wrap items-center gap-2 mt-4">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${load?.isVerified ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                {load?.isVerified ? "✔ Verified" : "Not Verified"}
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                 {load?.status?.replace("_", " ")}
               </span>
+              {load?.sender && (
+                <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full">
+                  <img src={load.sender.photo} alt={load.sender.name} className="w-5 h-5 rounded-full object-cover" />
+                  <span className="font-medium text-gray-700">Posted by {load.sender.name}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-6 mt-5 bg-gray-50 rounded-xl p-4">
@@ -315,13 +314,6 @@ export const LoadDetailsPage = () =>{
 
             {user?.role === "Driver" && load?.status === "BIDDING" && !timeLeft.ended && (
               <div className="mt-6 p-6 bg-gray-50 border rounded-lg">
-                {!load?.isVerified && (
-                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <Caption className="text-yellow-700 font-medium text-sm">
-                      ℹ This load is not yet verified by admin, but you can still place a bid.
-                    </Caption>
-                  </div>
-                )}
                 <Caption className="text-gray-600 font-medium mb-3">Place Your Bid</Caption>
                 <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleBidSubmit}>
                   <input
@@ -347,10 +339,27 @@ export const LoadDetailsPage = () =>{
             )}
 
             {user?.role === "Sender" && load?.status === "BIDDING" && timeLeft.ended && (
-              <div className="mt-6">
-                <button onClick={() => handleAssignDriver(load._id)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition">
-                  Select Winning Bid
-                </button>
+              <div className="mt-6 p-6 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                <p className="text-sm text-yellow-800 font-medium">
+                  Bidding has ended. Winner will be selected automatically — check back for payment status.
+                </p>
+              </div>
+            )}
+
+            {["PAYMENT_PENDING", "ASSIGNED", "IN_TRANSIT", "DELIVERED"].includes(load?.status) && load?.assignedDriver && (
+              <div className="mt-6 p-6 bg-green-50 border-2 border-green-200 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={load.assignedDriver.photo || "https://bidout-wp.b-cdn.net/wp-content/uploads/2022/10/Image-14.jpg"}
+                    alt={load.assignedDriver.name}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-green-300"
+                  />
+                  <div>
+                    <p className="text-sm font-bold text-green-800">🏆 Winner Driver</p>
+                    <p className="text-base font-semibold text-gray-800">{load.assignedDriver.name}</p>
+                    <p className="text-xs text-gray-500">{load.assignedDriver.email}</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -484,16 +493,16 @@ export const LoadDetailsPage = () =>{
         {/* Tabs */}
         <div className="mt-10">
           <div className="flex flex-wrap gap-2 sm:gap-4">
-            {["description", "auctionHistory", "reviews"].map((tab) => (
-              <button key={tab} className={`px-6 py-3 rounded-lg border transition ${ activeTab === tab ? "bg-green text-white" : "bg-white hover:bg-gray-100"}`} onClick={() => handleTabClick(tab)}>
-                {tab === "description" ? "Description" : tab === "auctionHistory"? `Auction History (${sortedBids.length})`: "Reviews"}
+            {["description", "auctionHistory"].map((tab) => (
+              <button key={tab} className={`px-6 py-3 rounded-lg border transition ${ activeTab === tab ? "bg-green_100 text-green font-semibold" : "bg-white hover:bg-gray-100"}`} onClick={() => handleTabClick(tab)}>
+                {tab === "description" ? "Description" : `Auction History (${sortedBids.length})`}
               </button>
             ))}
           </div>
 
           <div className="mt-6">
             {activeTab === "description" && (
-              <div className="shadow-s3 p-8 rounded-md">
+              <div className="bg-white shadow-s3 p-8 rounded-md">
                 <Title level={4}>Description</Title>
                 <br />
                 <Caption className="leading-7 text-gray-600">
@@ -575,12 +584,6 @@ export const LoadDetailsPage = () =>{
 
             {activeTab === "auctionHistory" && (
               <AuctionHistory bids={sortedBids} />
-            )}
-
-            {activeTab === "reviews" && (
-              <div className="p-6 border rounded-lg shadow-sm">
-                <Title level={5} className="text-red-500"> Coming Soon!</Title>
-              </div>
             )}
           </div>
         </div>

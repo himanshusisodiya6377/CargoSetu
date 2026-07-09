@@ -34,11 +34,15 @@ const bidSchema = new mongoose.Schema(
       enum: ["ACTIVE", "WON", "LOST"],
       default: "ACTIVE",
     },
+    isCompleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
-bidSchema.index({ load: 1, amount: 1 }); // fastest lowest-bid lookup
+bidSchema.index({ load: 1, amount: 1 });
 bidSchema.index({ driver: 1 });
 
 module.exports = mongoose.model("Bid", bidSchema);

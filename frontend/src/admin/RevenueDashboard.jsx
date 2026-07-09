@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
 import commissionService from "../redux/services/commissionService";
 import { BsCashCoin } from "react-icons/bs";
 import { FiDollarSign, FiPackage, FiRefreshCw } from "react-icons/fi";
@@ -22,7 +21,7 @@ const RevenueDashboard = () => {
       setData(revenueRes.data);
       setConfig(configRes.data);
       setNewPercentage(String(configRes.data.percentage));
-    } catch (err) {
+    } catch {
       toast.error("Failed to load revenue data");
     } finally {
       setLoading(false);
@@ -100,13 +99,13 @@ const RevenueDashboard = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="shadow-s1 p-5 rounded-lg flex items-center gap-4">
           <div className="p-3 bg-green_100 rounded-lg text-green shrink-0">
             <BsCashCoin size={24} />
           </div>
           <div>
-            <p className="text-xs text-gray_100">Total Commission Earned</p>
+            <p className="text-xs text-gray_100">Platform Commission</p>
             <p className="text-2xl font-bold text-gray-800">₹{data?.summary?.totalCommission?.toLocaleString() || "0"}</p>
           </div>
         </div>
@@ -123,6 +122,16 @@ const RevenueDashboard = () => {
 
         <div className="shadow-s1 p-5 rounded-lg flex items-center gap-4">
           <div className="p-3 bg-purple-100 rounded-lg text-purple-600 shrink-0">
+            <FiPackage size={24} />
+          </div>
+          <div>
+            <p className="text-xs text-gray_100">Total Revenue</p>
+            <p className="text-2xl font-bold text-gray-800">₹{data?.summary?.totalRevenue?.toLocaleString() || "0"}</p>
+          </div>
+        </div>
+
+        <div className="shadow-s1 p-5 rounded-lg flex items-center gap-4">
+          <div className="p-3 bg-orange-100 rounded-lg text-orange-600 shrink-0">
             <FiPackage size={24} />
           </div>
           <div>

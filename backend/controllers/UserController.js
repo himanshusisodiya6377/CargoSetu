@@ -10,7 +10,6 @@ const generateToken = (id) => {
 };
 
 const registerUser =async(req, res) =>{
-    // console.log(req.body);
   const { name, email, password, role } = req.body;
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
@@ -159,7 +158,7 @@ const loginAsSender =async (req, res) => {
   // Check if user's role is Sender
   if (user.role !== "Sender") {
     return res.status(403).json({
-        message:"Invalid email or password",
+        message:"You are not registered as a sender. Please upgrade your account.",
     });
   }
 
@@ -214,11 +213,6 @@ const getUserProfile = async (req, res) => {
 // Only for admin users
 const getAllUser = async (req, res) => {
   const userList = await User.find({}).select("-password -__v");
-  // console.log(userList)
-
-  if (!userList.length) {
-    return res.status(404).json({ message: "No user found" });
-  }
 
   res.status(200).json(userList);
 };

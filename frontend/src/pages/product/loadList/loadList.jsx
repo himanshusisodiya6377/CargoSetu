@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserLoads, deleteLoad, sellLoad } from "../../../redux/features/loadSlice";
+import { getUserLoads, deleteLoad } from "../../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../../hooks/useRedirectLoggedOutUser";
 import { FiEye, FiEdit2, FiTrash2, FiPlusCircle } from "react-icons/fi";
-import { toast } from "react-toastify";
 
 const STATUS_COLORS = {
   OPEN:           "bg-blue-100 text-blue-700",
@@ -31,16 +30,6 @@ const LoadList = () =>{
       dispatch(deleteLoad(id)).then(() => {
         dispatch(getUserLoads());
       });
-    }
-  };
-
-  const handleSellLoad = async(id)=>{
-    if(!window.confirm("Assign this load to the lowest bidder?")) return;
-    try{
-      await dispatch(sellLoad(id)).unwrap();
-      dispatch(getUserLoads());
-    }catch(error){
-      toast.error(error || "Failed to assign load");
     }
   };
 
@@ -75,9 +64,8 @@ const LoadList = () =>{
                   <th className="py-2 px-3 text-center">Budget</th>
                   <th className="py-2 px-3 text-center">Bids</th>
                   <th className="py-2 px-3 text-center">Lowest Bid</th>
-                  <th className="py-2 px-3 text-center">Verified</th>
                   <th className="py-2 px-3">Status</th>
-                  <th className="py-2 px-3 text-center">Sell</th>
+                  <th className="py-2 px-3 text-center">Assignment</th>
                   <th className="py-2 px-3 text-center">Actions</th>
                 </tr>
               </thead>
@@ -97,25 +85,20 @@ const LoadList = () =>{
                     <td className="py-3 px-3 text-center font-semibold text-green">
                       {item.currentLowestBid != null ? `₹${item.currentLowestBid}` : "—"}
                     </td>
-                    <td className="py-3 px-3 text-center">
-                      <span className={`inline-block w-2 h-2 rounded-full ${item.isVerified ? "bg-green-500" : "bg-red-400"}`}></span>
-                    </td>
                     <td className="py-3 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[item.status] ?? "bg-gray-100 text-gray-600"}`}>
                         {item.status?.replace("_", " ")}
                       </span>
                     </td>
                     <td className="py-3 px-3 text-center">
-                      {item.status === "ASSIGNED" ? (
-                        <span className="text-xs text-green-600 font-medium">Assigned</span>
-                      ) : item.status === "PAYMENT_PENDING" ? (
-                        <span className="text-xs text-orange-500 font-medium">Payment Pending</span>
+                      {item.status === "DELIVERED" ? (
+                        <span className="text-xs text-green-600 font-medium">Delivered</span>
+                      ) : ["ASSIGNED", "PAYMENT_PENDING", "IN_TRANSIT"].includes(item.status) ? (
+                        <span className="text-xs text-orange-500 font-medium">Assigned</span>
                       ) : item.status === "ENDED" ? (
                         <span className="text-xs text-gray-400 font-medium">Ended</span>
                       ) : (
-                        <button onClick={() => handleSellLoad(item._id)} disabled={!item.isVerified} className={`text-xs px-3 py-1 rounded-lg font-medium transition ${item.isVerified ? "bg-green text-white hover:bg-primary" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
-                          Sell
-                        </button>
+                        <span className="text-xs text-gray-400">—</span>
                       )}
                     </td>
 

@@ -99,20 +99,6 @@ export const getUserProfile = createAsyncThunk(
 );
 
 
-export const checkAuth = createAsyncThunk(
-  "auth/checkAuth",
-  async (_, thunkAPI) => {
-    try {
-      const user=await authService.getCurrentUser();
-      localStorage.setItem("user", JSON.stringify(user));
-      return user;
-    } catch (error) {
-      localStorage.removeItem("user");
-      return thunkAPI.rejectWithValue("Not authenticated");
-    }
-  }
-);
-
 export const loginUserAsSeller = createAsyncThunk(
   "auth/loginAsSeller",
   async (userData, thunkAPI) => {
@@ -132,7 +118,6 @@ export const loginUserAsSeller = createAsyncThunk(
 export const getAllUsers = createAsyncThunk(
   "auth/getAllUsers",
   async (_, thunkAPI) => {
-    // console.log("hee")
     try {
       return await authService.getAllUser();
     } catch (error) {
@@ -301,22 +286,6 @@ const authSlice = createSlice({
 
         localStorage.removeItem("user");
         })
-      
-      .addCase(checkAuth.pending, (state) => {                
-        state.isLoading = true;
-      })
-
-      .addCase(checkAuth.fulfilled, (state, action) =>{
-         state.isLoading = false;  
-        state.user = action.payload;
-        state.isLoggedIn = true;
-      })
-
-      .addCase(checkAuth.rejected, (state) =>{
-        state.isLoading = false; 
-        state.user = null;
-        state.isLoggedIn = false;
-      })
 
       .addCase(loginUserAsSeller.pending, (state) => {
         state.isLoading = true;
@@ -343,7 +312,6 @@ const authSlice = createSlice({
       })
 
       .addCase(getAllUsers.fulfilled, (state, action) => {
-          // console.log("API payload:", action.payload);
         state.isLoading = false;
         state.users = action.payload;
       })

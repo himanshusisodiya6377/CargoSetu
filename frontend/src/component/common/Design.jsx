@@ -49,10 +49,10 @@ const CustomNavLink = ({ href, className, isActive, children }) =>{
   );
 };
 
-const CustomLink = ({ className, children }) =>{
+const CustomLink = ({ href, className, children }) =>{
   const linkStyles = "text-[15px] font-medium text-gray-600 font-sans cursor-pointer list-none";
 
-  return <NavLink className={`${className} ${linkStyles}`}>{children}</NavLink>;
+  return <NavLink to={href} className={`${className} ${linkStyles}`}>{children}</NavLink>;
 };
 
 const Container = ({ children, className }) =>{

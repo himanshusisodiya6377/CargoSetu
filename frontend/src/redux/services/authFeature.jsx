@@ -69,19 +69,6 @@ const loginUserAsSeller = async (userData) =>{
   return response.data;
 };
 
-const getCurrentUser = async () =>{
-  const token = localStorage.getItem("token");
-
-  const response = await axios.get(`${AUTH_URL}me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    withCredentials: true,
-  });
-
-  return response.data;
-};
-
 const getAllUser = async () =>{
    const token = localStorage.getItem("token");
   const response = await axios.get(`${AUTH_URL}users`, {headers: {
@@ -89,7 +76,6 @@ const getAllUser = async () =>{
     },
     withCredentials: true,
   });
-  // console.log("API RESPONSE:", response.data); 
   return response.data;
 };
 
@@ -122,6 +108,6 @@ const becomeSender = async () => {
   return response.data;
 };
 
-const authService ={register,login,logout,getCurrentUser,getLoginStatus,getUserProfile,loginUserAsSeller,getAllUser,updateProfile,deleteUser,becomeSender};
+const authService ={register,login,logout,getLoginStatus,getUserProfile,loginUserAsSeller,getAllUser,updateProfile,deleteUser,becomeSender};
 
 export default authService;

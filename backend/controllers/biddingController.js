@@ -3,11 +3,11 @@ const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
 const { calculateAndSave } = require("../utils/commission");
 const {sendBidPlacedEmail, sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
+const sseService = require("../services/sseService");
 
 const getBiddingHistory = async(req, res) =>{
   try {
     const { loadId } = req.params;
-    // console.log(loadId)
 
     if (!loadId) {
       return res.status(400).json({
@@ -15,7 +15,7 @@ const getBiddingHistory = async(req, res) =>{
       });
     }
 
-    const bids = await BiddingLoad.find({ load: loadId }).sort({ createdAt: 1 }).populate("driver").populate("load");
+    const bids = await BiddingLoad.find({ load: loadId }).sort({ createdAt: 1 }).populate("driver", "name email photo").populate("load");
 
     return res.status(200).json({
       success: true,
@@ -64,6 +64,14 @@ const placeBid =async(req,res) =>{
         message: "Bidding time window is closed",
       })}
 
+    // driver must not already have an active (non-DELIVERED) load
+    const activeLoad = await Load.findOne({ assignedDriver: driverId, status: { $nin: ["DELIVERED", "ENDED"] }});
+    if(activeLoad){
+      return res.status(400).json({
+        success: false,
+        message: "You already have an active load in progress. Complete it before bidding on new ones.",
+      })}
+
     // check current lowest bid
     const lowestBid = await BiddingLoad.findOne({load: loadId}).sort({amount: 1});
 
@@ -106,6 +114,10 @@ const placeBid =async(req,res) =>{
       // Don't fail the bid placement if email fails
     }
 
+    sseService.sendToLoadWatchers(loadId, "newBid", {
+      loadId, bid: { _id: bid._id, driver: { _id: driverId, name: req.user.name }, amount, createdAt: bid.createdAt },
+    });
+
     return res.status(201).json({
       success: true,
       message: "Bid placed successfully",
@@ -120,53 +132,6 @@ const placeBid =async(req,res) =>{
   }
 };
 
-const finalizeLoad = async (req, res)=>{
-  try {
-    const { loadId } = req.body;
-    const senderId = req.user._id;
-
-     const load = await Load.findOne({_id:loadId,sender:senderId}).populate("sender", "name email");
-
-    if(!load) return res.status(404).json({message: "Load not found"});
-
-    if(load.status === "ASSIGNED" || load.status === "PAYMENT_PENDING")
-        return res.status(400).json({message: "Load already closed or payment pending"});
-    
-     if(new Date() < new Date(load.bidEndTime)){
-        return res.status(400).json({
-          message: "Bidding is still active. You can assign only after the bid window ends.",
-        })}
-
-    const winningBid = await BiddingLoad.findOne({ load: loadId }).sort({ amount: 1 }).populate("driver","name email phone");
-
-    if(!winningBid) return res.status(400).json({ message: "No bids found" });
-
-    load.status = "PAYMENT_PENDING";
-    load.assignedDriver = winningBid.driver._id;
-
-    await load.save();
-
-    await BiddingLoad.updateMany(
-        {load: loadId, _id:{ $ne: winningBid._id }},
-        {status: "LOST"}
-    );
-
-    winningBid.status = "WON";
-    const commissionData = await calculateAndSave(winningBid);
-
-    load.adminCommission = commissionData.commissionPercentage;
-
-    return res.status(200).json({
-        success: true,
-        message: "Bid selected. Payment is now pending.",
-        data: load,
-        commission: commissionData,
-      });
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to finalize load", error: error.message });
-  }
-};
-
 const getWinningBids = async (req, res)=>{
   try {
     const user = req.user;
@@ -175,8 +140,8 @@ const getWinningBids = async (req, res)=>{
     if (user.role === "Driver") {
       winningBids = await BiddingLoad.find({driver: user._id, status: "WON"}).populate({
           path: "load",
-          populate: {path: "sender", select: "name email phone photo"},
-        }).populate("driver", "name email phone photo vehicleType licenseNumber rating jobsCompleted").sort({ updatedAt: -1 });
+          populate: {path: "sender", select: "name email phone photo createdAt"},
+        }).populate("driver", "name email phone photo vehicleType licenseNumber createdAt").sort({ updatedAt: -1 });
       
         winningBids = winningBids.filter((b) => b.load?.status !== "DELIVERED");
 
@@ -184,7 +149,7 @@ const getWinningBids = async (req, res)=>{
       const assignedLoads = await Load.find({sender: user._id, status: { $in:["PAYMENT_PENDING", "ASSIGNED", "IN_TRANSIT"]}});
       const loadIds = assignedLoads.map((l) => l._id);
 
-      winningBids = await BiddingLoad.find({load: { $in: loadIds }, status: "WON"}).populate("load").populate("driver", "name email phone photo vehicleType licenseNumber rating jobsCompleted").sort({updatedAt: -1});
+      winningBids = await BiddingLoad.find({load: { $in: loadIds }, status: "WON"}).populate("load").populate("driver", "name email phone photo vehicleType licenseNumber createdAt").sort({updatedAt: -1});
     } else {
       return res.status(403).json({message: "Access denied"});
     }
@@ -230,8 +195,14 @@ const updateTrackingStatus = async (req, res)=>{
 
     if(status === "DELIVERED"){
       const winningBid = await BiddingLoad.findOne({load: load._id, status: "WON"});
-      if (winningBid && winningBid.commissionAmount > 0) {
-        await User.updateOne({ role: "Admin" }, { $inc: { commissionBalance: winningBid.commissionAmount } });
+      if (winningBid) {
+        winningBid.isCompleted = true;
+        await winningBid.save();
+
+        if (winningBid.commissionAmount > 0) {
+          await User.updateOne({ role: "Admin" }, { $inc: { commissionBalance: winningBid.commissionAmount } });
+        }
+
       }
       try{
         await sendDeliveryConfirmationEmail({sender: load.sender, load});
@@ -239,6 +210,10 @@ const updateTrackingStatus = async (req, res)=>{
         console.error("Delivery email failed:", err.message);
       }
     }
+
+    sseService.sendToUser(load.sender._id.toString(), "trackingUpdate", {
+      loadId: load._id, status: load.status, deliveryDate: load.deliveryDate,
+    });
 
     return res.status(200).json({ success: true, message: `Status updated to ${status}`, data: load });
   } catch (error) {
@@ -248,7 +223,11 @@ const updateTrackingStatus = async (req, res)=>{
 
 const getMyBids = async (req, res)=>{
   try {
-    const bids = await BiddingLoad.find({driver: req.user._id}).populate("load", "title pickupLocation dropLocation status bidEndTime isVerified").sort({ createdAt: -1 });
+    const bids = await BiddingLoad.find({driver: req.user._id}).populate({
+      path: "load",
+      select: "title pickupLocation dropLocation status bidEndTime",
+      populate: { path: "sender", select: "name photo" },
+    }).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, data: bids });
   } catch (error){
     return res.status(500).json({ message: "Failed to fetch your bids", error: error.message });
@@ -338,4 +317,4 @@ const deleteBidByAdmin = async (req, res)=>{
   }
 };
 
-module.exports = {placeBid, getBiddingHistory, finalizeLoad, getWinningBids, updateTrackingStatus, getMyBids, updateBid, deleteBid, deleteBidByAdmin};
+module.exports = {placeBid, getBiddingHistory, getWinningBids, updateTrackingStatus, getMyBids, updateBid, deleteBid, deleteBidByAdmin};

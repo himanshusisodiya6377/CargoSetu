@@ -43,16 +43,6 @@ const userSchema = mongoose.Schema(
     vehicleType: String,
     capacity: Number,
     licenseNumber: String,
-    rating: {
-      type: Number,
-      default: 5,
-      min: 1,
-      max: 5,
-    },
-    jobsCompleted: {
-      type: Number,
-      default: 0,
-    },
     isVerified: {
       type: Boolean,
       default: false,

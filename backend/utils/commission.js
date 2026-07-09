@@ -11,7 +11,7 @@ function calculateCommission(bidAmount, percentage) {
   return { commissionAmount, driverAmount };
 }
 
-async function calculateAndSave(bidDocument) {
+async function calculateAndSave(bidDocument, session = null) {
   const percentage = await getCommissionPercentage();
   const { commissionAmount, driverAmount } = calculateCommission(bidDocument.amount, percentage);
 
@@ -19,7 +19,7 @@ async function calculateAndSave(bidDocument) {
   bidDocument.commissionPercentage = percentage;
   bidDocument.commissionAmount = commissionAmount;
   bidDocument.driverAmount = driverAmount;
-  await bidDocument.save();
+  await bidDocument.save({ session });
 
   return { bidAmount: bidDocument.amount, commissionPercentage: percentage, commissionAmount, driverAmount };
 }

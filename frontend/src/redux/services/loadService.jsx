@@ -68,16 +68,6 @@ const placeBid = async (id, amount) =>{
   return response.data;
 };
 
-const sellLoad = async (loadId) =>{
-  const response = await axios.post(
-    `${BACKEND_URL}/bidding/sell`,
-    { loadId },
-    { withCredentials: true }
-  );
-
-  return response.data;
-};
-
 const getWonBids = async () =>{
   const response = await axios.get(
     `${BACKEND_URL}/bidding/won`,
@@ -95,12 +85,8 @@ const updateTracking = async (loadId, status) =>{
   return response.data;
 };
 
-const getActiveLoads = async (coords) =>{
-  const params = coords ? { lat: coords.lat, lng: coords.lng } : {};
-  const response = await axios.get(`${LOAD_URL}active`, {
-    params,
-    withCredentials: true,
-  });
+const getActiveLoads = async () =>{
+  const response = await axios.get(`${LOAD_URL}active`, { withCredentials: true });
   return response.data;
 };
 
@@ -136,11 +122,6 @@ const deleteLoadByAdmin = async (id) =>{
   return response.data;
 };
 
-const verifyLoad = async (id, commission) =>{
-  const response = await axios.patch(`${LOAD_URL}admin/Load-verified/${id}`, { commission }, { withCredentials: true });
-  return response.data;
-};
-
 const deleteBidByAdmin = async (id) =>{
   const response = await axios.delete(`${BIDDING_URL}admin/${id}`, { withCredentials: true });
   return response.data;
@@ -151,6 +132,6 @@ const getLoadBids = async (loadId) =>{
   return response.data;
 };
 
-const loadService = {createLoad,getLoads,getUserLoads,getLoad,updateLoad,deleteLoad,placeBid,sellLoad, getWonBids, updateTracking, getActiveLoads, getCompletedLoads,getMyBids, updateBid, deleteBid,getAllLoadsAdmin, deleteLoadByAdmin, verifyLoad, deleteBidByAdmin, getLoadBids};
+const loadService = {createLoad,getLoads,getUserLoads,getLoad,updateLoad,deleteLoad,placeBid, getWonBids, updateTracking, getActiveLoads, getCompletedLoads,getMyBids, updateBid, deleteBid,getAllLoadsAdmin, deleteLoadByAdmin, deleteBidByAdmin, getLoadBids};
 
 export default loadService;

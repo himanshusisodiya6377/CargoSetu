@@ -5,7 +5,6 @@ import { getUserLoads } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { AdminDashboard } from "./AdminDashboard";
-import { BsCashCoin } from "react-icons/bs";
 import { FiPackage, FiEye, FiEdit2 } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
 import { DriverDashboard } from "./DriverDashboard";
@@ -23,7 +22,7 @@ const STATUS_COLORS ={
 export const Dashboard = () =>{
   useRedirectLoggedOutUser("/login");
   const dispatch = useDispatch();
-  const {role, balance, user} = useUserProfile();
+  const {role, user} = useUserProfile();
   const {userLoads, isLoading} = useSelector((state) => state.load);
 
   const loads = useMemo(() => userLoads?.data ?? [],[userLoads]);
@@ -59,10 +58,14 @@ export const Dashboard = () =>{
   return (
     <section className="space-y-6">
       <div className="shadow-s1 p-6 rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-800 capitalize">
-          Welcome, {user?.name || "Sender"}
-        </h2>
-        <p className="text-gray_100 text-sm mt-1">Here's a summary of your activity.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 capitalize">
+              Welcome, {user?.name || "Sender"}
+            </h2>
+            <p className="text-gray_100 text-sm mt-1">Here's a summary of your activity.</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -148,5 +151,3 @@ export const Dashboard = () =>{
     </section>
   );
 };
-
-export const UserProduct = () => null;

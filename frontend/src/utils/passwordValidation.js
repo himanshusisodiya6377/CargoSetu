@@ -6,7 +6,7 @@ const COMMON_WEAK_PASSWORDS = new Set([
   "password123",
 ]);
 
-const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{}|;:'",.<>?\/\\]/;
+const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=[\]{}|;:'",.<>?/\\]/;
 
 export const getPasswordChecks = (password = "") => [
   { key: "length", label: "8 to 64 characters", valid: password.length >= 8 && password.length <= 64 },

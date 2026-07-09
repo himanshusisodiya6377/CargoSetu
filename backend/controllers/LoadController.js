@@ -6,8 +6,6 @@ const biddingLoad=require("../models/biddingLoad.js")
 const createLoad = async(req, res) =>{
   try {
 
-    // console.log(req.body);
-
     let { title,maxBudget,description,pickupLocation,dropLocation,weight,dimensions,vehicleType,cargoType,bidDuration } = req.body;
 
     if (!title || !maxBudget || !description || !pickupLocation || !dropLocation || !weight || !vehicleType) {
@@ -59,7 +57,7 @@ const createLoad = async(req, res) =>{
 
 const getAllLoads = async (req, res)=>{
   try {
-    const loads = await Load.find({status: "BIDDING"}).sort({createdAt: -1}).populate("sender", "name email");
+    const loads = await Load.find({status: "BIDDING"}).sort({createdAt: -1}).populate("sender", "name email photo createdAt");
 
     const loadsWithDetails = loads.map((load)=>{
       return{
@@ -128,7 +126,6 @@ const deleteLoad =async(req, res) =>{
 const updateLoad = async (req, res)=>{
   try {
     const {id} = req.params;
-    // console.log(id);
 
     let {title,description,pickupLocation,dropLocation,weight,vehicleType,cargoType,maxBudget,bidDuration}=req.body;
 
@@ -227,7 +224,7 @@ const getAllLoadsOfUser = async (req, res)=>{
   try {
     const senderId = req.user._id;
     // Fetch loads created by this sender
-    const loads = await Load.find({sender: senderId}).sort({ createdAt: -1}).populate("sender", "name email");
+    const loads = await Load.find({sender: senderId}).sort({ createdAt: -1}).populate("sender", "name email photo createdAt");
 
     const loadsWithDetails = await Promise.all(
       loads.map(async (load) =>{
@@ -255,46 +252,6 @@ const getAllLoadsOfUser = async (req, res)=>{
   }
 };
 
-
-const verifyAndAddCommissionLoadByAdmin = async(req, res) =>{
-  try {
-    const commission = Number(req.body.commission);
-    const { id } = req.params;
-
-    if(req.body.commission == null || isNaN(commission) || commission < 0 || commission > 100){
-      return res.status(400).json({
-        message: "Valid commission value (0–100) is required",
-      });
-    }
-
-    const load = await Load.findById(id);
-    if(!load){
-      return res.status(404).json({
-        message: "Load not found",
-      });
-    }
-
-    load.isVerified = true;
-    load.adminCommission = commission;
-
-    if(load.status === "OPEN" || !load.status){
-      load.status = "OPEN";
-    }
-
-    await load.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Load verified and commission applied successfully",
-      data: load,
-    });
-  }catch (error){
-    return res.status(500).json({
-      message: "Failed to verify load",
-      error: error.message,
-    });
-  }
-};
 
 const getAllLoadsByAdmin = async (req, res) =>{
   try {
@@ -368,26 +325,9 @@ const deleteLoadsByAdmin = async (req, res)=>{
   }
 };
 
-const getAllCompletedLoads = async(req, res)=>{
-  try {
-    const loads = await Load.find({status: "COMPLETED"}).sort({createdAt: -1}).populate("sender").populate("winner");
-
-    return res.status(200).json({
-      success: true,
-      count: loads.length,
-      data: loads,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Failed to fetch completed loads",
-      error: error.message,
-    });
-  }
-};
-
 const getLoadById = async (req, res)=>{
   try {
-     const load = await Load.findById(req.params.id).populate("sender", "name email").populate("assignedDriver", "name email").populate({
+     const load = await Load.findById(req.params.id).populate("sender", "name email photo").populate("assignedDriver", "name email photo").populate({
         path: "bids",
         model: "Bid",                      
         populate: {path: "driver", select: "name email"},
@@ -413,7 +353,7 @@ const getActiveLoads = async(req, res)=>{
     if(role === "Sender"){
       loads = await Load.find({sender: userId, status: "BIDDING"}).sort({ bidEndTime: 1});
     }else if(role === "Driver"){
-      loads = await Load.find({status: "BIDDING"}).populate("sender", "name email photo").sort({ bidEndTime: 1});
+      loads = await Load.find({status: "BIDDING"}).populate("sender", "name email photo createdAt").sort({ bidEndTime: 1});
     }else{
       return res.status(403).json({message: "Access denied"});
     }
@@ -445,7 +385,7 @@ const getCompletedUserLoads = async(req, res)=>{
     if(role === "Sender"){
       loads = await Load.find({sender: userId, status: { $in: ["ASSIGNED", "ENDED", "DELIVERED"] }}).populate("assignedDriver","name email phone photo vehicleType").sort({updatedAt: -1});
     }else if(role === "Driver"){
-      loads = await Load.find({ assignedDriver: userId, status: { $in: ["ASSIGNED", "ENDED", "DELIVERED"] }}).populate("sender", "name email phone photo").sort({ updatedAt: -1});
+      loads = await Load.find({ assignedDriver: userId, status: "DELIVERED" }).populate("sender", "name email phone photo createdAt").sort({ updatedAt: -1});
     }else{
       return res.status(403).json({ message: "Access denied" });
     }
@@ -479,4 +419,4 @@ const deleteLoadByAdmin = async(req, res)=>{
   }
 };
 
-module.exports={createLoad,getAllLoads,deleteLoad,updateLoad,getAllLoadsOfUser,verifyAndAddCommissionLoadByAdmin,getAllLoadsByAdmin,deleteLoadsByAdmin,deleteLoadByAdmin,getAllCompletedLoads,getLoadById,getActiveLoads,getCompletedUserLoads};
+module.exports={createLoad,getAllLoads,deleteLoad,updateLoad,getAllLoadsOfUser,getAllLoadsByAdmin,deleteLoadsByAdmin,deleteLoadByAdmin,getLoadById,getActiveLoads,getCompletedUserLoads};

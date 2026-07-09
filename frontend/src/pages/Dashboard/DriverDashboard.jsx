@@ -6,7 +6,6 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import { TbTruckDelivery } from "react-icons/tb";
 import { FiCheckCircle, FiEye } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
-import { BsCashCoin } from "react-icons/bs";
 import { MdOutlineGavel } from "react-icons/md";
 
 const STATUS_COLORS ={
@@ -34,7 +33,7 @@ const MiniTracker = ({status}) =>{
 
 export const DriverDashboard = ()=>{
   const dispatch = useDispatch();
-  const {user, balance} = useUserProfile();
+  const {user} = useUserProfile();
   const {wonLoads, completedLoads, myBids, isLoading} = useSelector((state) => state.load);
 
   useEffect(() =>{
@@ -73,10 +72,14 @@ export const DriverDashboard = ()=>{
   return (
     <section className="space-y-6">
       <div className="shadow-s1 p-6 rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-800 capitalize">
-          Welcome, {user?.name || "Driver"}
-        </h2>
-        <p className="text-gray_100 text-sm mt-1">Here's a summary of your activity.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 capitalize">
+              Welcome, {user?.name || "Driver"}
+            </h2>
+            <p className="text-gray_100 text-sm mt-1">Here's a summary of your activity.</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

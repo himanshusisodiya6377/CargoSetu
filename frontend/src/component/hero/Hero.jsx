@@ -22,7 +22,7 @@ const Hero = () => {
 
             <Body className="text-slate-400 leading-7 my-6 max-w-xl">
               A modern freight platform where senders post loads, drivers bid
-              competitively, and the lowest verified bid wins — ensuring
+              competitively, and the lowest bid wins — ensuring
               cost-effective and reliable transport.
             </Body>
 
@@ -38,8 +38,8 @@ const Hero = () => {
 
             <div className="absolute top-6 left-4 lg:top-10 lg:left-0">
               <Box
-                title="Verified Loads & Drivers"
-                desc="Admin-verified loads and trusted transport partners"/>
+                title="Trusted Community"
+                desc="Community-rated loads and trusted transport partners"/>
             </div>
 
             <div className="absolute bottom-20 right-4 lg:bottom-24 lg:right-0">

@@ -3,7 +3,6 @@ import { CiGrid41 } from "react-icons/ci";
 import { IoSettingsOutline } from "react-icons/io5";
 import { MdOutlineCategory } from "react-icons/md";
 import { RiAuctionLine } from "react-icons/ri";
-import { User1 } from "../hero/Hero";
 import { CgProductHunt } from "react-icons/cg";
 import { FiUser } from "react-icons/fi";
 import { FaPlusCircle } from "react-icons/fa";
@@ -27,8 +26,6 @@ export const Sidebar = ({onNavigate}) =>{
     if(!isLoggedIn) return <p>You need to log to access this page.</p>
 
     const handleNav = () => { if (onNavigate) onNavigate(); };
-
-    console.log(role);
 
   const className = "flex items-center gap-3 mb-2 p-3 lg:p-4 rounded-full";
 

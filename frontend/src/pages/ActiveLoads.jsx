@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchActiveLoads } from "../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../hooks/useRedirectLoggedOutUser";
-import { MdLocationOn, MdLocationOff } from "react-icons/md";
 
 const StatusBadge = ({status}) =>{
   const colors = {
@@ -22,36 +21,10 @@ const ActiveLoads = ()=>{
   const dispatch = useDispatch();
   const {activeLoads,isLoading} = useSelector((state) => state.load);
   const {user} = useSelector((state) => state.auth);
-  const [locationStatus, setLocationStatus] = useState("pending"); 
 
   useEffect(() =>{
-    if(user?.role !== "Driver"){
-      dispatch(fetchActiveLoads());
-      return;
-    }
-
-    if(!navigator.geolocation){
-      setLocationStatus("denied");
-      dispatch(fetchActiveLoads());
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position)=>{
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        setLocationStatus("granted");
-        dispatch(fetchActiveLoads(coords));
-      },
-      () =>{
-        setLocationStatus("denied");
-        dispatch(fetchActiveLoads());
-      },
-      {timeout: 8000}
-    );
-  },[dispatch, user?.role]);
+    dispatch(fetchActiveLoads());
+  },[dispatch]);
 
   return (
     <section className="space-y-6">
@@ -60,12 +33,6 @@ const ActiveLoads = ()=>{
         <p className="text-sm text-gray-400 mt-1">
           {user?.role === "Driver" ? "Loads currently open for bidding." : "Your loads currently open for bidding."}
         </p>
-
-        {user?.role === "Driver" && locationStatus === "denied" && (
-          <p className="mt-2 flex items-center gap-1 text-xs text-yellow-600 font-medium">
-            <MdLocationOff size={14} /> Location access denied — showing all available loads
-          </p>
-        )}
       </div>
 
       <div className="shadow-s1 p-6 rounded-lg">
@@ -108,7 +75,9 @@ const ActiveLoads = ()=>{
                             className="w-7 h-7 rounded-full object-cover"
                             alt={load.sender?.name}
                           />
-                          <span className="text-xs capitalize">{load.sender?.name || "—"}</span>
+                          <div className="text-xs">
+                            <p className="font-medium capitalize">{load.sender?.name || "—"}</p>
+                          </div>
                         </div>
                       </td>
                     )}

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Title } from "../../routes/index";
 import { getWonBids, updateTracking } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
-import { FiPackage, FiTruck, FiCheckCircle, FiLoader } from "react-icons/fi";
+import { FiPackage, FiTruck, FiCheckCircle } from "react-icons/fi";
 
 const STEPS = [
   { key: "ASSIGNED",   label: "Assigned",   Icon: FiPackage },
@@ -82,7 +82,7 @@ export const WinningBidList = ()=>{
             const loadStatus = bid.load?.status || "ASSIGNED";
             return (
               <div key={bid._id} className="border-2 border-gray-100 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden hover:shadow-xl transition-all">
-                <div className={`px-6 py-3 text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2 ${loadStatus === "DELIVERED" ? "bg-gradient-to-r from-green-500 to-green-600": loadStatus === "IN_TRANSIT" ? "bg-gradient-to-r from-yellow-500 to-yellow-600": loadStatus === "PAYMENT_PENDING" ? "bg-gradient-to-r from-orange-500 to-orange-600": "bg-gradient-to-r from-blue-500 to-blue-600"}`}>
+                <div className={`px-6 py-3 text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2 ${loadStatus === "DELIVERED" ? "bg-gradient-to-r from-green to-green": loadStatus === "IN_TRANSIT" ? "bg-gradient-to-r from-yellow-500 to-yellow-600": loadStatus === "PAYMENT_PENDING" ? "bg-gradient-to-r from-orange-500 to-orange-600": "bg-gradient-to-r from-blue-500 to-blue-600"}`}>
                   {loadStatus === "DELIVERED" && <FiCheckCircle size={18} />}
                   {loadStatus === "IN_TRANSIT" && <FiTruck size={18} />}
                   {loadStatus === "ASSIGNED" && <FiPackage size={18} />}
@@ -115,9 +115,9 @@ export const WinningBidList = ()=>{
                       {user?.role === "Sender" ? (
                         <div className="flex items-center gap-4">
                           <img src={bid.driver?.photo || "https://cdn-icons-png.flaticon.com/512/2202/2202112.png"} alt={bid.driver?.name} className="w-14 h-14 rounded-full object-cover border border-gray-200"/>
-                          <div className="text-sm text-gray-700 space-y-0.5">
-                            <p className="font-semibold text-gray-900 capitalize">{bid.driver?.name}</p>
-                            <p className="text-gray-500">{bid.driver?.email}</p>
+                            <div className="text-sm text-gray-700 space-y-0.5">
+                              <p className="font-semibold text-gray-900 capitalize">{bid.driver?.name}</p>
+                              <p className="text-gray-500">{bid.driver?.email}</p>
                             {bid.driver?.phone && <p className="text-gray-500">{bid.driver?.phone}</p>}
                             {bid.driver?.vehicleType && <p className="text-gray-500">{bid.driver?.vehicleType}</p>}
                             {bid.driver?.licenseNumber && <p className="text-gray-500">License: {bid.driver?.licenseNumber}</p>}
@@ -158,7 +158,7 @@ export const WinningBidList = ()=>{
                             <button 
                               onClick={() => handleStatusUpdate(bid.load._id, "IN_TRANSIT")}
                               disabled={loadingId === bid.load._id}
-                              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-base py-3 px-6 rounded-lg transition-colors shadow-md"
+                              className="w-full bg-green hover:bg-primary text-white font-bold text-base py-3 px-6 rounded-lg transition-colors shadow-md"
                             >
                               Start Transit
                             </button>
@@ -167,14 +167,16 @@ export const WinningBidList = ()=>{
                             <button 
                               onClick={() => handleStatusUpdate(bid.load._id, "DELIVERED")}
                               disabled={loadingId === bid.load._id}
-                              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-base py-3 px-6 rounded-lg transition-colors shadow-md"
+                              className="w-full bg-green hover:bg-primary text-white font-bold text-base py-3 px-6 rounded-lg transition-colors shadow-md"
                             >
                               Mark as Delivered
                             </button>
                           )}
                           {loadStatus === "DELIVERED" && (
-                            <div className="w-full bg-green-500 text-white font-bold text-base py-3 px-6 rounded-lg text-center shadow-md">
-                              Delivered
+                            <div className="flex flex-col gap-2">
+                              <div className="w-full bg-green text-white font-bold text-base py-3 px-6 rounded-lg text-center shadow-md">
+                                ✅ Delivered
+                              </div>
                             </div>
                           )}
                         </div>

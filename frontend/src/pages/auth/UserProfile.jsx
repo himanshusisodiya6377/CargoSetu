@@ -77,7 +77,7 @@ const UserProfile = () =>{
             </button>
             <input ref={fileInputRef} type="file" accept="image/png, image/jpg, image/jpeg" className="hidden" onChange={handlePhotoChange}/>
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-800 capitalize">{user?.name || "—"}</h3>
             <p className="text-sm text-gray_100">{user?.email}</p>
             <span className="mt-1 inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-green_100 text-green">

@@ -40,7 +40,7 @@ const getRevenueDashboard = async (req, res) => {
 
     const totalCommission = payments.reduce((sum, p) => sum + (p.commissionAmount || 0), 0);
     const totalDriverEarnings = payments.reduce((sum, p) => sum + (p.driverAmount || 0), 0);
-    const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
     return res.status(200).json({
       success: true,

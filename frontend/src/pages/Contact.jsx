@@ -105,7 +105,7 @@ const Contact = ()=>{
 
                       <button type="submit" disabled={isLoading} className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-green text-white font-semibold py-3 rounded-full transition disabled:opacity-60">
                         {isLoading ? (
-                          <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sendingâ€¦</>
+                          <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sending...</>
                         ) : (
                           <><FiSend size={15} /> Send Message</>
                         )}

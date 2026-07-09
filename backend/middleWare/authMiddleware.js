@@ -44,7 +44,7 @@ const isDriver = (req, res, next) =>{
     next();
   } else {
     return res.status(403).json({
-        message:"Access denied. You are not an admin",
+        message:"Access denied. You are not a driver",
     });
   }
 };

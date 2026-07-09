@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { IoLocationOutline, IoTimeOutline } from "react-icons/io5";
 
 const AuctionCard = ({ auction }) =>{
-  const { _id, title, pickupLocation, dropLocation, vehicleType, cargoType, lowestBid, timeLeftMinutes, isVerified, totalBids = 0 } = auction;
+  const { _id, title, pickupLocation, dropLocation, vehicleType, cargoType, lowestBid, timeLeftMinutes, totalBids = 0, sender } = auction;
 
   const timeLabel = timeLeftMinutes<=0 ? "Ended" : timeLeftMinutes<60 ? `${timeLeftMinutes} min left`
       : `${Math.floor(timeLeftMinutes/60)}h ${timeLeftMinutes%60}m left`;
@@ -52,8 +52,11 @@ const AuctionCard = ({ auction }) =>{
           </div>
         )}
 
-        {isVerified && (
-          <p className="mt-2 text-xs text-blue-600 font-medium"> ✔ Verified Load</p>
+        {sender && (
+          <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+            <img src={sender.photo} alt={sender.name} className="w-5 h-5 rounded-full object-cover" />
+            <span className="font-medium text-gray-700">Posted by {sender.name}</span>
+          </div>
         )}
       </div>
 

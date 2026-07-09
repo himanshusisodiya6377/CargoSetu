@@ -1,10 +1,11 @@
-﻿import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getLoads } from "../redux/features/loadSlice";
 import { Container, Title, Body, Caption } from "../routes/index";
 import AuctionCard from "../component/Cards/AuctionCard";
 import { FiFilter } from "react-icons/fi";
 import { vehicleOptions,cargoOptions } from "../utils/data.jsx";
+import { useSSE } from "../hooks/useSSE";
 
 const LiveAuctions = () =>{
   const dispatch = useDispatch();
@@ -12,11 +13,17 @@ const LiveAuctions = () =>{
 
   const [filters, setFilters] = useState({
     from: "", to: "", vehicleType: "", cargoType: "",
-    minPrice: "", maxPrice: "", timeLeft: "all", verifiedOnly: false,
+    minPrice: "", maxPrice: "", timeLeft: "all",
   });
   const [showFilters, setShowFilters] = useState(true);
 
   useEffect(() =>{ dispatch(getLoads())},[dispatch]);
+
+  useSSE(null, {
+    loadUpdate: useCallback(() => {
+      dispatch(getLoads());
+    }, [dispatch]),
+  });
 
   const live = useMemo(()=>{
     const now = new Date();
@@ -36,7 +43,6 @@ const LiveAuctions = () =>{
     if(filters.maxPrice && l.lowestBid !== null && l.lowestBid > Number(filters.maxPrice)) return false;
     if(filters.timeLeft === "1h"  && l.timeLeftMinutes > 60) return false;
     if(filters.timeLeft === "30m" && l.timeLeftMinutes > 30) return false;
-    if(filters.verifiedOnly && !l.isVerified) return false;
     return true;
   }),[live, filters]);
 
