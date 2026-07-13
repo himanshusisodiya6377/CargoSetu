@@ -1,9 +1,8 @@
 const User = require("../models/User.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const fs = require("fs");
-const cloudinary = require("../config/cloudinary.js");
 const { validatePassword } = require("../utils/passwordValidation");
+const { uploadToCloudinary, deleteCloudinaryImages } = require("../utils/fileUpload");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -177,20 +176,6 @@ const loginAsSender =async (req, res) => {
   res.status(200).json({ _id, name, email: userEmail, photo, role, token });
 };
 
-const getUserBalance = async (req, res) => {
-  const user = await User.findById(req.user.id);
-
-  if (!user) {
-    return res.status(404).json({
-        message:"User not found",
-    })
-}
-
-  return res.status(200).json({
-    balance: user.balance,
-  });
-};
-
 const getUserProfile = async (req, res) => {
   try {
     const token = req.cookies.token;
@@ -243,16 +228,11 @@ const updateUserProfile = async (req, res) => {
 
     // Handle photo upload
     if (req.file) {
-      // Delete old photo from cloudinary if it exists and is not the default
       if (user.photo && user.photoPublicId) {
-        await cloudinary.uploader.destroy(user.photoPublicId);
+        await deleteCloudinaryImages([{ public_id: user.photoPublicId }]);
       }
 
-      const uploaded = await cloudinary.uploader.upload(req.file.path, {
-        folder: "CargoSetu/Profiles",
-      });
-
-      fs.unlinkSync(req.file.path); // remove temp file
+      const uploaded = await uploadToCloudinary(req.file.buffer, "CargoSetu/Profiles");
 
       user.photo = uploaded.secure_url;
       user.photoPublicId = uploaded.public_id;
@@ -263,7 +243,6 @@ const updateUserProfile = async (req, res) => {
 
     return res.status(200).json({ _id, name: n, email, photo, role, phone: ph });
   } catch (error) {
-    if (req.file?.path) fs.unlinkSync(req.file.path); // cleanup on error
     return res.status(500).json({ message: "Failed to update profile", error: error.message });
   }
 };
@@ -278,7 +257,7 @@ const deleteUser = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (user.photo && user.photoPublicId) {
-      await cloudinary.uploader.destroy(user.photoPublicId);
+      await deleteCloudinaryImages([{ public_id: user.photoPublicId }]);
     }
 
     await user.deleteOne();
@@ -309,4 +288,4 @@ const becomeSender = async (req, res) => {
   }
 };
 
-module.exports = { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserBalance,getUserProfile ,getAllUser,estimateIncome,updateUserProfile,deleteUser,becomeSender};
+module.exports = { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserProfile,getAllUser,estimateIncome,updateUserProfile,deleteUser,becomeSender};

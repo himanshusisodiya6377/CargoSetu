@@ -3,7 +3,7 @@ const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
 const { calculateAndSave } = require("../utils/commission");
 const {sendBidPlacedEmail, sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
-const sseService = require("../services/sseService");
+const { sendToLoadWatchers, sendToUser } = require("../services/websocketService");
 
 const getBiddingHistory = async(req, res) =>{
   try {
@@ -88,17 +88,6 @@ const placeBid =async(req,res) =>{
       amount,
     });
 
-    // push bid into load
-    await Load.findByIdAndUpdate(loadId,{
-      $push: { bids: bid._id },
-      $set: {
-        lowestBid: {
-          amount: amount,
-          driver: driverId
-        }
-      }
-});
-
     // Send confirmation email to driver
     try {
       const driver = await User.findById(driverId);
@@ -114,7 +103,7 @@ const placeBid =async(req,res) =>{
       // Don't fail the bid placement if email fails
     }
 
-    sseService.sendToLoadWatchers(loadId, "newBid", {
+    sendToLoadWatchers(loadId, "newBid", {
       loadId, bid: { _id: bid._id, driver: { _id: driverId, name: req.user.name }, amount, createdAt: bid.createdAt },
     });
 
@@ -211,7 +200,7 @@ const updateTrackingStatus = async (req, res)=>{
       }
     }
 
-    sseService.sendToUser(load.sender._id.toString(), "trackingUpdate", {
+    sendToUser(load.sender._id.toString(), "trackingUpdate", {
       loadId: load._id, status: load.status, deliveryDate: load.deliveryDate,
     });
 
@@ -256,11 +245,6 @@ const updateBid = async (req, res)=>{
     bid.amount = amount;
     await bid.save();
 
-    const newLowest = await BiddingLoad.findOne({load: bid.load }).sort({amount: 1});
-    await Load.findByIdAndUpdate(bid.load, {
-      $set: {lowestBid: { amount: newLowest.amount, driver: newLowest.driver}},
-    });
-
     return res.status(200).json({ success: true, message: "Bid updated", data: bid });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -282,13 +266,6 @@ const deleteBid = async (req, res)=>{
       return res.status(400).json({ message: "Bid window has ended" });
 
     await bid.deleteOne();
-    await Load.findByIdAndUpdate(bid.load,{$pull: { bids: bid._id}});
-
-    // Recalculate lowestBid
-    const newLowest = await BiddingLoad.findOne({load: bid.load}).sort({amount: 1});
-    await Load.findByIdAndUpdate(bid.load,{
-      $set: {lowestBid: newLowest ? {amount: newLowest.amount,driver: newLowest.driver} : {amount: null, driver: null } },
-    });
 
     return res.status(200).json({ success: true, message: "Bid withdrawn" });
   } catch (error) {
@@ -304,12 +281,6 @@ const deleteBidByAdmin = async (req, res)=>{
 
     const loadId = bid.load;
     await bid.deleteOne();
-    await Load.findByIdAndUpdate(loadId,{$pull: {bids: bid._id}});
-
-    const newLowest = await BiddingLoad.findOne({load:loadId}).sort({amount: 1});
-    await Load.findByIdAndUpdate(loadId,{
-      $set:{lowestBid: newLowest ? {amount: newLowest.amount,driver: newLowest.driver} : {amount:null, driver: null}},
-    });
 
     return res.status(200).json({ success: true, message: "Bid deleted by admin" });
   } catch (error) {

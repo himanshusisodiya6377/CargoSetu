@@ -35,7 +35,6 @@ const loadSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    pickupDate: Date,
     deliveryDate: Date,
     weight: {
       type: Number,
@@ -66,24 +65,6 @@ const loadSchema = mongoose.Schema(
     bidEndTime: {
       type: Date,
     },
-    bids: [
-      {
-        driver: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        amount: Number,
-        bidTime: { type: Date, default: Date.now },
-      },
-    ],
-     lowestBid: {
-      driver: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-      amount: {
-        type: Number,
-        default: null,
-      },
-      bidTime: Date,
-    },
     assignedDriver: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -97,10 +78,7 @@ const loadSchema = mongoose.Schema(
       enum: ["OPEN", "BIDDING", "PAYMENT_PENDING", "ASSIGNED", "ENDED", "IN_TRANSIT", "DELIVERED"],
       default: "OPEN",
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
+
   },
   { timestamps: true }
 );

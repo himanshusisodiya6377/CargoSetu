@@ -8,7 +8,7 @@ import { createPaymentOrder, verifyPayment, fetchPaymentDetails } from "../../re
 import { toast } from "react-toastify";
 import { FiPackage, FiTruck, FiCheckCircle, FiCreditCard, FiCheck } from "react-icons/fi";
 import { BACKEND_URL } from "../../utils/url";
-import { useSSE } from "../../hooks/useSSE";
+import { useWebSocket } from "../../hooks/useWebSocket";
 
 const STEPS = [
   { key: "ASSIGNED",   label: "Assigned",   Icon: FiPackage },
@@ -80,7 +80,7 @@ export const LoadDetailsPage = () =>{
     }
   };
 
-  useSSE(id, {
+  useWebSocket(id, {
     newBid: (event) => {
       setBids((prev) => {
         const exists = prev.some((b) => b._id === event.bid._id);
@@ -560,10 +560,6 @@ export const LoadDetailsPage = () =>{
                       <span>₹{load?.maxBudget}</span>
                     </div>
 
-                    <div className="flex justify-between border-b py-3">
-                      <span className="font-medium">Verified</span>
-                      <span>{load?.isVerified ? "Yes" : "No"}</span>
-                    </div>
 
                     <div className="flex justify-between border-b py-3">
                       <span className="font-medium">Status</span>

@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { NavLink } from "react-router-dom";
 import React from "react";
 
-const Title = ({ level, children, className }) => {
+const Title = ({ level = 1, children, className }) => {
   const classes = `${
     level === 1
       ? "text-[26px] sm:text-[35px] lg:text-[45px] font-[700]": level === 2

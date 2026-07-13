@@ -1,21 +1,7 @@
 const multer = require("multer")
-const fs=require("fs");
-const path =require("path")
+const cloudinary = require("../config/cloudinary.js");
 
-const uploadDir = path.join(__dirname, "../uploads");
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads")
-  },
-  filename: function (req, file, cb) {
-    cb(null, new Date().toISOString().replace(/:/g, "-") + "-" + file.originalname) // 23/08/2022
-  },
-})
+const storage = multer.memoryStorage()
 
 function fileFilter(req, file, cb) {
   if (file.mimetype === "image/png" || file.mimetype === "image/jpg" || file.mimetype === "image/jpeg") {
@@ -27,4 +13,26 @@ function fileFilter(req, file, cb) {
 
 const upload = multer({ storage, fileFilter })
 
-module.exports = { upload }
+function uploadToCloudinary(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+async function deleteCloudinaryImages(images) {
+  if (!images || images.length === 0) return;
+  for (const img of images) {
+    if (img.public_id) {
+      await cloudinary.uploader.destroy(img.public_id);
+    }
+  }
+}
+
+module.exports = { upload, uploadToCloudinary, deleteCloudinaryImages }

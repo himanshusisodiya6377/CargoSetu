@@ -17,9 +17,9 @@ const contactRoutes = require("./routes/contactRoutes.js");
 const paymentRoutes = require("./routes/paymentRoutes.js");
 const commissionRoutes = require("./routes/commissionRoutes.js");
 const dns = require("dns");
-const sseRoutes = require("./routes/sseRoutes.js");
-const sseService = require("./services/sseService");
+
 dns.setServers(["1.1.1.1","8.8.8.8"]);
+const { setupWebSocket, sendToUser, sendToLoadWatchers, broadcast } = require("./services/websocketService");
 const app = express();
 
 
@@ -48,8 +48,6 @@ app.use("/api/bidding", biddingRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/commission", commissionRoutes);
-app.use("/api/events", sseRoutes);
-
 app.use(errorHandler);
 
 
@@ -66,11 +64,10 @@ cron.schedule("* * * * *",async ()=>{
     for(const load of startedLoads){
       load.status = "BIDDING";
       await load.save();
-      sseService.sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
+      sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
         loadId: load._id, status: "BIDDING", bidEndTime: load.bidEndTime,
       });
-      sseService.broadcast("loadUpdate", { loadId: load._id, status: "BIDDING" });
-      // console.log(`Load ${load._id} bidding started`);
+      broadcast("loadUpdate", { loadId: load._id, status: "BIDDING" });
     }
 
     // End bidding or set payment pending for loads whose bidEndTime has passed
@@ -85,11 +82,10 @@ cron.schedule("* * * * *",async ()=>{
       if(!winningBid){
         load.status = "ENDED";
         await load.save();
-        sseService.sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
+        sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
           loadId: load._id, status: "ENDED",
         });
-        sseService.broadcast("loadUpdate", { loadId: load._id, status: "ENDED" });
-        // console.log(`Load ${load._id} ended with no bids`);
+        broadcast("loadUpdate", { loadId: load._id, status: "ENDED" });
         continue;
       }
 
@@ -102,11 +98,10 @@ cron.schedule("* * * * *",async ()=>{
       if(driversActiveLoad){
         load.status = "ENDED";
         await load.save();
-        sseService.sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
+        sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
           loadId: load._id, status: "ENDED",
         });
-        sseService.broadcast("loadUpdate", { loadId: load._id, status: "ENDED" });
-        // console.log(`Load ${load._id} ended — winning driver already has an active load`);
+        broadcast("loadUpdate", { loadId: load._id, status: "ENDED" });
         continue;
       }
 
@@ -131,15 +126,13 @@ cron.schedule("* * * * *",async ()=>{
       } finally {
         session.endSession();
       }
-      sseService.sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
+      sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
         loadId: load._id, status: "PAYMENT_PENDING", winningDriver: winningBid.driver,
       });
-      sseService.broadcast("loadUpdate", { loadId: load._id, status: "PAYMENT_PENDING" });
-      sseService.sendToUser(winningBid.driver.toString(), "bidWon", {
+      broadcast("loadUpdate", { loadId: load._id, status: "PAYMENT_PENDING" });
+      sendToUser(winningBid.driver.toString(), "bidWon", {
         loadId: load._id, title: load.title, amount: winningBid.amount,
       });
-
-      // console.log(`Load ${load._id} awaiting payment from sender`);
     }
   } catch (err) {
     console.error("Cron job error:",err.message);
@@ -147,9 +140,13 @@ cron.schedule("* * * * *",async ()=>{
 });
 
 
-const PORT =process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
+const http = require("http");
+const server = http.createServer(app);
 
-app.listen(PORT,() =>{
+setupWebSocket(server);
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 });
 

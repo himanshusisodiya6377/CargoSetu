@@ -17,9 +17,6 @@ const bidSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    bidAmount: {
-      type: Number,
-    },
     commissionPercentage: {
       type: Number,
     },

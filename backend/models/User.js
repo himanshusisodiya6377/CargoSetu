@@ -18,8 +18,6 @@ const userSchema = mongoose.Schema(
     },
     phone: {
       type: String,
-      required: false,
-      unique: false,
     },
     password: {
       type: String,
@@ -33,8 +31,7 @@ const userSchema = mongoose.Schema(
     },
      photoPublicId: {
      type: String,
-     default: null,
-    },
+     },
     role: {
       type: String,
       enum: ["Admin", "Sender", "Driver"],
@@ -43,23 +40,10 @@ const userSchema = mongoose.Schema(
     vehicleType: String,
     capacity: Number,
     licenseNumber: String,
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    balance: {
-      type: Number,
-      default: 0,
-    },
     commissionBalance: {
       type: Number,
       default: 0,
     },
-    passwordChangedAt: Date,
   },
   { timestamps: true }
 );

@@ -1,7 +1,6 @@
 const Load = require("../models/Load");
-const cloudinary = require("../config/cloudinary.js");
-const fs = require("fs");
 const biddingLoad=require("../models/biddingLoad.js")
+const { uploadToCloudinary, deleteCloudinaryImages } = require("../utils/fileUpload");
 
 const createLoad = async(req, res) =>{
   try {
@@ -23,19 +22,12 @@ const createLoad = async(req, res) =>{
 
     if(req.files && req.files.length > 0){
       for(const file of req.files){
-        try{
-          const uploaded = await cloudinary.uploader.upload(file.path,{
-          folder: "CargoSetu/Loads",
-        });
+        const uploaded = await uploadToCloudinary(file.buffer, "CargoSetu/Loads");
 
         images.push({
           url: uploaded.secure_url,
           public_id: uploaded.public_id,
         });
-        }
-        finally{
-            fs.unlinkSync(file.path);
-        }
       }
     }
 
@@ -59,13 +51,17 @@ const getAllLoads = async (req, res)=>{
   try {
     const loads = await Load.find({status: "BIDDING"}).sort({createdAt: -1}).populate("sender", "name email photo createdAt");
 
-    const loadsWithDetails = loads.map((load)=>{
-      return{
-        ...load._doc,
-        currentLowestBid: load.lowestBid?.amount ?? null,
-        totalBids: load.bids?.length ?? 0,
-      };
-    });
+    const loadsWithDetails = await Promise.all(
+      loads.map(async (load) => {
+        const lowestBid = await biddingLoad.findOne({ load: load._id }).sort({ amount: 1 });
+        const totalBids = await biddingLoad.countDocuments({ load: load._id });
+        return {
+          ...load._doc,
+          currentLowestBid: lowestBid ? lowestBid.amount : null,
+          totalBids,
+        };
+      })
+    );
 
     return res.status(200).json({
       success: true,
@@ -95,19 +91,14 @@ const deleteLoad =async(req, res) =>{
       return res.status(401).json({ message: "Not authorized" });
     }
 
-   if(load.bids && load.bids.length > 0){
+   const hasBids = await biddingLoad.countDocuments({ load: id });
+   if(hasBids > 0){
   return res.status(400).json({
     message: "Cannot delete load after bids have been placed",
   });
 }
 
-    if(load.images && load.images.length>0){
-      for(const img of load.images){
-        if(img.public_id){
-          await cloudinary.uploader.destroy(img.public_id);
-        }
-      }
-    }
+    await deleteCloudinaryImages(load.images);
 
     await load.deleteOne();
 
@@ -139,7 +130,8 @@ const updateLoad = async (req, res)=>{
       return res.status(403).json({message: "Not authorized"});
     }
 
-    if(load.bids && load.bids.length > 0){
+    const hasBids = await biddingLoad.countDocuments({ load: id });
+    if(hasBids > 0){
       return res.status(400).json({
         message: "Cannot update load after bids are placed",
       })}
@@ -182,26 +174,15 @@ const updateLoad = async (req, res)=>{
       const newImages = [];
 
       for(const file of req.files){
-        try{
-          const uploaded = await cloudinary.uploader.upload(file.path,{
-            folder: "CargoSetu/Loads",
-          });
+        const uploaded = await uploadToCloudinary(file.buffer, "CargoSetu/Loads");
 
-          newImages.push({
-            url: uploaded.secure_url,
-            public_id: uploaded.public_id,
-          });
-
-        } finally {
-          fs.unlinkSync(file.path);
-        }
+        newImages.push({
+          url: uploaded.secure_url,
+          public_id: uploaded.public_id,
+        });
       }
 
-      // delete old images after successful upload
-      for(const img of load.images){
-        if(img.public_id){
-          await cloudinary.uploader.destroy(img.public_id);
-        }}
+      await deleteCloudinaryImages(load.images);
       load.images = newImages;
     }
     
@@ -297,15 +278,8 @@ const deleteLoadsByAdmin = async (req, res)=>{
     }
 
     const loads = await Load.find({ _id: { $in: loadIds }});
-    // Delete Cloudinary images
     for(const load of loads){
-      if(load.images && load.images.length > 0){
-        for(const img of load.images){
-          if(img.public_id){
-            await cloudinary.uploader.destroy(img.public_id);
-          }
-        }
-      }
+      await deleteCloudinaryImages(load.images);
     }
 
     // Delete related bids
@@ -327,11 +301,7 @@ const deleteLoadsByAdmin = async (req, res)=>{
 
 const getLoadById = async (req, res)=>{
   try {
-     const load = await Load.findById(req.params.id).populate("sender", "name email photo").populate("assignedDriver", "name email photo").populate({
-        path: "bids",
-        model: "Bid",                      
-        populate: {path: "driver", select: "name email"},
-      });
+     const load = await Load.findById(req.params.id).populate("sender", "name email photo").populate("assignedDriver", "name email photo");
 
     if(!load){
       return res.status(404).json({message: "Load not found"});
@@ -402,13 +372,7 @@ const deleteLoadByAdmin = async(req, res)=>{
     const load = await Load.findById(id);
     if(!load) return res.status(404).json({message: "Load not found"});
 
-    if(load.images && load.images.length > 0) {
-      for(const img of load.images){
-        if(img.public_id){
-          await cloudinary.uploader.destroy(img.public_id);
-        }
-      }
-    }
+    await deleteCloudinaryImages(load.images);
 
     await biddingLoad.deleteMany({load: id});
     await load.deleteOne();

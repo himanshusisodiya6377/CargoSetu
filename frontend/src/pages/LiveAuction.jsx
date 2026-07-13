@@ -5,7 +5,7 @@ import { Container, Title, Body, Caption } from "../routes/index";
 import AuctionCard from "../component/Cards/AuctionCard";
 import { FiFilter } from "react-icons/fi";
 import { vehicleOptions,cargoOptions } from "../utils/data.jsx";
-import { useSSE } from "../hooks/useSSE";
+import { useWebSocket } from "../hooks/useWebSocket";
 
 const LiveAuctions = () =>{
   const dispatch = useDispatch();
@@ -19,7 +19,7 @@ const LiveAuctions = () =>{
 
   useEffect(() =>{ dispatch(getLoads())},[dispatch]);
 
-  useSSE(null, {
+  useWebSocket(null, {
     loadUpdate: useCallback(() => {
       dispatch(getLoads());
     }, [dispatch]),

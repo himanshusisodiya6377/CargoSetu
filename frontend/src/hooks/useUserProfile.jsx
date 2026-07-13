@@ -6,8 +6,7 @@ export const useUserProfile = () => {
   const isLoggedIn = useSelector(selectIsLoggedIn);
 
   const role = user?.role || null;
-  const balance = user?.balance || 0;
   const commission = user?.commissionBalance || 0;
 
-  return {user,role,balance,commission,isLoggedIn,isLoading,};
+  return {user,role,commission,isLoggedIn,isLoading,};
 };
