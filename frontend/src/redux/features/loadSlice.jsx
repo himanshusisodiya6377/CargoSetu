@@ -357,10 +357,13 @@ const loadSlice = createSlice({
         toast.error(action.payload);
       })
 
-  .addCase(placeBid.pending, () =>{
+  .addCase(placeBid.pending, (state) =>{
+        state.isLoading = true;
       })
-  .addCase(placeBid.fulfilled, () =>{
-})
+  .addCase(placeBid.fulfilled, (state) =>{
+        state.isLoading = false;
+        state.isSuccess = true;
+      })
   .addCase(placeBid.rejected, (state,action) =>{
         state.isLoading = false;
         state.isError = true;

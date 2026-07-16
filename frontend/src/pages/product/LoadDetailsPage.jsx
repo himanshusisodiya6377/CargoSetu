@@ -11,6 +11,7 @@ import { BACKEND_URL } from "../../utils/url";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import TrackingBar from "../../component/common/TrackingBar";
 import { FALLBACK_IMAGE } from "../../utils/data";
+import axios from "axios";
 
 export const LoadDetailsPage = () =>{
   const [activeTab, setActiveTab] = useState("description");
@@ -34,11 +35,11 @@ export const LoadDetailsPage = () =>{
 
   const fetchBids = async () =>{
     try {
-      const response = await fetch(`${BACKEND_URL}/bidding/${id}`,{
-        credentials: "include",
+      const response = await axios.get(`${BACKEND_URL}/bidding/${id}`, {
+        withCredentials: true,
+        timeout: 10000,
       });
-      const data = await response.json();
-      if (data.data) setBids(data.data);
+      if (response.data?.data) setBids(response.data.data);
     } catch (err) {
       console.error("Failed to fetch bids:", err);
     }
@@ -183,15 +184,19 @@ export const LoadDetailsPage = () =>{
       }}
 
     setIsLoadingBid(true);
-    const result = await dispatch(placeBid({ id, amount: bidAmountNum}));
-    if(result.meta.requestStatus === "fulfilled"){
-      toast.success("Bid placed successfully");
-      setBidAmount("");
-      await fetchBids();
-    }else{
-      toast.error(result.payload || "Failed to place bid. Try again.");
+    try {
+      const result = await dispatch(placeBid({ id, amount: bidAmountNum}));
+      if(result.meta.requestStatus === "fulfilled"){
+        toast.success("Bid placed successfully");
+        setBidAmount("");
+        await fetchBids();
+      }else{
+        toast.error(result.payload || "Failed to place bid. Try again.");
+      }
+    } finally {
+      setIsLoadingBid(false);
     }
-    setIsLoadingBid(false)};
+  };
 
   const handleTrackingUpdate = (loadId, status)=>{
   const label = status === "IN_TRANSIT" ? "mark as In Transit" : "mark as Delivered";
