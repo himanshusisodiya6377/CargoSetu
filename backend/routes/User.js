@@ -3,13 +3,12 @@ const router = express.Router();
 const {auth,isAdmin}=require("../middleware/authMiddleware");
 const { upload } = require("../utils/fileUpload");
 const authRateLimit = require("../middleware/authRateLimit");
-const { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserProfile,getAllUser,estimateIncome, updateUserProfile, deleteUser, becomeSender } = require("../controllers/UserController");
+const { registerUser,loginUser,loginStatus,logoutUser,getUserProfile,getAllUser,estimateIncome, updateUserProfile, deleteUser, becomeSender } = require("../controllers/UserController");
 
 router.post("/register", authRateLimit, registerUser);
 router.post("/login", authRateLimit, loginUser);
 router.get("/loggedin", loginStatus);
 router.get("/logout", logoutUser);
-router.post("/sender", authRateLimit, loginAsSender);
 router.get("/getuser", getUserProfile);
 router.get("/users", auth, isAdmin, getAllUser);
 router.get("/estimate-income", auth, isAdmin, estimateIncome);

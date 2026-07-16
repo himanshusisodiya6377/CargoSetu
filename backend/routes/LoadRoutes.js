@@ -2,11 +2,10 @@ const express = require("express");
 const { auth, isAdmin, isSender } = require("../middleware/authMiddleware");
 const router = express.Router();
 const { upload } = require("../utils/fileUpload");
-const {createLoad,getAllLoads,deleteLoad,updateLoad,getAllLoadsOfUser,getAllLoadsByAdmin,deleteLoadsByAdmin,deleteLoadByAdmin,getLoadById, getCompletedUserLoads, getActiveLoads}=require("../controllers/LoadController");
+const {createLoad,getAllLoads,deleteLoad,updateLoad,getAllLoadsOfUser,getAllLoadsByAdmin,deleteLoadByAdmin,getLoadById, getCompletedUserLoads, getActiveLoads}=require("../controllers/LoadController");
 
-// Admin-only routes (must be defined before /:id to avoid conflicts)
+
 router.get("/admin/all", auth, isAdmin, getAllLoadsByAdmin);
-router.delete("/admin/bulk", auth, isAdmin, deleteLoadsByAdmin);
 router.delete("/admin/:id", auth, isAdmin, deleteLoadByAdmin);
 
 router.post("/", auth, isSender, upload.array("images",5), createLoad);

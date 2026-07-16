@@ -8,7 +8,6 @@ const initialState = {
   wonLoads: [],
   myBids: [],
   load: null,
-  earnings: null,
   activeLoads: [],
   completedLoads: [],
   adminLoads: [],
@@ -111,19 +110,6 @@ export const placeBid = createAsyncThunk(
   async ({ id, amount }, thunkAPI) => {
     try {
       return await loadService.placeBid(id, amount);
-    } catch (error) {
-      return thunkAPI.rejectWithValue(getErrorMessage(error));
-    }
-  }
-);
-
-export const placeBidAndRefresh = createAsyncThunk(
-  "loads/bidAndRefresh",
-  async ({ id, amount }, thunkAPI) => {
-    try {
-
-      await loadService.placeBid(id, amount);
-      return await loadService.getLoad(id);
     } catch (error) {
       return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
@@ -235,13 +221,6 @@ const loadSlice = createSlice({
   initialState,
 
   reducers: {
-    RESET(state) {
-      state.isError = false;
-      state.isSuccess = false;
-      state.isLoading = false;
-      state.message = "";
-      state.load = null;
-    },
   },
 
   extraReducers: (builder) => {
@@ -389,21 +368,6 @@ const loadSlice = createSlice({
         toast.error(action.payload);
       })
 
-  .addCase(placeBidAndRefresh.pending, (state) => {
-  state.isLoading = true;
-})
-  .addCase(placeBidAndRefresh.fulfilled, (state, action) =>{
-  state.isLoading = false;
-  state.load = action.payload;
-  toast.success("Bid placed successfully");
-})
-  .addCase(placeBidAndRefresh.rejected, (state, action) =>{
-  state.isLoading = false;
-  state.isError = true;
-  state.message = action.payload;
-  toast.error(action.payload);
-})
-
  .addCase(getWonBids.pending, (state) =>{
   state.isLoading = true;
 })
@@ -534,5 +498,4 @@ const loadSlice = createSlice({
   },
 });
 
-export const { RESET } = loadSlice.actions;
 export default loadSlice.reducer;

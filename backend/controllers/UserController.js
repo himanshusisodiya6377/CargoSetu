@@ -127,54 +127,7 @@ const logoutUser =async (req, res) => {
   return res.status(200).json({ message: "Successfully Logged Out" });
 };
 
-const loginAsSender =async (req, res) => {
-   const { email, password } = req.body;
-   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-  // Check if email and password are provided
-  if (!normalizedEmail || !password) {
-    return res.status(400).json({
-        message:"Invalid email or password",
-    });
-  }
-
-  // Find the user by email
-  const user = await User.findOne({ email: normalizedEmail });
-  if (!user) {
-    return res.status(404).json({
-        message:"Invalid email or password",
-    });
-  }
-
-  // Verify the password
-  const passwordIsCorrect = await bcrypt.compare(password, user.password);
-  if (!passwordIsCorrect) {
-    return res.status(400).json({
-        message:"Invalid email or password",
-    });
-  }
-
-  // Check if user's role is Sender
-  if (user.role !== "Sender") {
-    return res.status(403).json({
-        message:"You are not registered as a sender. Please upgrade your account.",
-    });
-  }
-
-  // Generate a token and set cookie
-  const token = generateToken(user._id);
-  res.cookie("token", token, {
-    path: "/",
-    httpOnly: true,
-    expires: new Date(Date.now() + 1000 * 86400),
-    sameSite: "none",
-    secure: true,
-  });
-
-  // Send the response with user info
-  const { _id, name, email: userEmail, photo, role } = user;
-  res.status(200).json({ _id, name, email: userEmail, photo, role, token });
-};
 
 const getUserProfile = async (req, res) => {
   try {
@@ -288,4 +241,4 @@ const becomeSender = async (req, res) => {
   }
 };
 
-module.exports = { registerUser,loginUser,loginStatus,logoutUser,loginAsSender,getUserProfile,getAllUser,estimateIncome,updateUserProfile,deleteUser,becomeSender};
+module.exports = { registerUser,loginUser,loginStatus,logoutUser,getUserProfile,getAllUser,estimateIncome,updateUserProfile,deleteUser,becomeSender};

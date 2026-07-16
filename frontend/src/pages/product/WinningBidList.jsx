@@ -4,42 +4,7 @@ import { Title } from "../../routes/index";
 import { getWonBids, updateTracking } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
 import { FiPackage, FiTruck, FiCheckCircle } from "react-icons/fi";
-
-const STEPS = [
-  { key: "ASSIGNED",   label: "Assigned",   Icon: FiPackage },
-  { key: "IN_TRANSIT", label: "In Transit",  Icon: FiTruck },
-  { key: "DELIVERED",  label: "Delivered",   Icon: FiCheckCircle },
-];
-
-const TrackingBar = ({ status })=>{
-  const current = STEPS.findIndex((s) => s.key === status);
-  return (
-    <div className="flex items-center w-full gap-2">
-      {STEPS.map(({ key, label, Icon }, i) =>(
-        <div key={key} className="flex items-center flex-1 last:flex-none">
-          <div className="flex flex-col items-center gap-2 flex-1">
-            <div className={`w-11 h-11 rounded-full flex items-center justify-center border-3 transition-all font-semibold ${
-              i < current  
-                ? "bg-green-500 border-green-500 text-white shadow-md" 
-                : i === current 
-                ? "bg-blue-500 border-blue-600 text-white shadow-lg animate-pulse" 
-                : "bg-gray-100 border-gray-300 text-gray-400"
-            }`}>
-              <Icon size={20} />
-            </div>
-            <span className={`text-xs font-semibold whitespace-nowrap transition-all ${
-              i <= current ? "text-green-600" : "text-gray-400"
-            }`}>{label}</span>
-          </div>
-          {i < STEPS.length - 1 && (
-            <div className={`flex-1 h-1 mx-1 rounded-full transition-all ${
-              i < current ? "bg-green-500" : i === current ? "bg-blue-500" : "bg-gray-300"
-            }`}/>
-          )}
-        </div>))}
-    </div>
-  );
-};
+import TrackingBar from "../../component/common/TrackingBar";
 
 export const WinningBidList = ()=>{
   useRedirectLoggedOutUser("/login");
@@ -175,7 +140,7 @@ export const WinningBidList = ()=>{
                           {loadStatus === "DELIVERED" && (
                             <div className="flex flex-col gap-2">
                               <div className="w-full bg-green text-white font-bold text-base py-3 px-6 rounded-lg text-center shadow-md">
-                                ✅ Delivered
+                                Delivered
                               </div>
                             </div>
                           )}
@@ -184,7 +149,7 @@ export const WinningBidList = ()=>{
                     </div>
                   </div>
                   <div className="border-t-2 border-gray-200 pt-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 -m-6 mt-0">
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">📍 Delivery Progress</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">Delivery Progress</p>
                     <TrackingBar status={loadStatus} />
                   </div>
 

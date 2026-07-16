@@ -267,38 +267,6 @@ const getAllLoadsByAdmin = async (req, res) =>{
 };
 
 
-const deleteLoadsByAdmin = async (req, res)=>{
-  try {
-    const {loadIds} = req.body;
-
-    if (!Array.isArray(loadIds) || loadIds.length === 0){
-      return res.status(400).json({
-        message: "loadIds must be a non-empty array",
-      });
-    }
-
-    const loads = await Load.find({ _id: { $in: loadIds }});
-    for(const load of loads){
-      await deleteCloudinaryImages(load.images);
-    }
-
-    // Delete related bids
-    await biddingLoad.deleteMany({load:{ $in: loadIds }});
-
-    const result = await Load.deleteMany({_id:{ $in: loadIds }});
-
-    return res.status(200).json({
-      success: true,
-      message: `${result.deletedCount} loads deleted successfully`,
-    });
-  }catch (error){
-    return res.status(500).json({
-      message: "Failed to delete loads",
-      error: error.message,
-    });
-  }
-};
-
 const getLoadById = async (req, res)=>{
   try {
      const load = await Load.findById(req.params.id).populate("sender", "name email photo").populate("assignedDriver", "name email photo");
@@ -383,4 +351,4 @@ const deleteLoadByAdmin = async(req, res)=>{
   }
 };
 
-module.exports={createLoad,getAllLoads,deleteLoad,updateLoad,getAllLoadsOfUser,getAllLoadsByAdmin,deleteLoadsByAdmin,deleteLoadByAdmin,getLoadById,getActiveLoads,getCompletedUserLoads};
+module.exports={createLoad,getAllLoads,deleteLoad,updateLoad,getAllLoadsOfUser,getAllLoadsByAdmin,deleteLoadByAdmin,getLoadById,getActiveLoads,getCompletedUserLoads};

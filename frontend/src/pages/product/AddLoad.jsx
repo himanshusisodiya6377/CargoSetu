@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createLoad } from "../../redux/features/loadSlice";
 import { Caption, Title } from "../../routes";
 import { commonClassNameOfInput } from "../../component/common/Design";
+import { BID_DURATIONS } from "../../utils/data";
 
 const initialState = {
 title: "",
@@ -19,14 +20,6 @@ vehicleType: "",
 cargoType: "",
 bidDuration: "60",
 };
-
-const BID_DURATIONS = [
-  { value: "30", label: "30 minutes" },
-  { value: "60", label: "1 hour" },
-  { value: "120", label: "2 hours" },
-  { value: "360", label: "6 hours" },
-  { value: "1440", label: "24 hours" },
-];
 
 const AddLoad = () =>{
 

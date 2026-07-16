@@ -14,6 +14,7 @@ const LiveAuctions = () =>{
   const [filters, setFilters] = useState({
     from: "", to: "", vehicleType: "", cargoType: "",
     minPrice: "", maxPrice: "", timeLeft: "all",
+    verifiedOnly: false,
   });
   const [showFilters, setShowFilters] = useState(true);
 
@@ -43,6 +44,7 @@ const LiveAuctions = () =>{
     if(filters.maxPrice && l.lowestBid !== null && l.lowestBid > Number(filters.maxPrice)) return false;
     if(filters.timeLeft === "1h"  && l.timeLeftMinutes > 60) return false;
     if(filters.timeLeft === "30m" && l.timeLeftMinutes > 30) return false;
+    if(filters.verifiedOnly && !l.sender?.isVerified) return false;
     return true;
   }),[live, filters]);
 

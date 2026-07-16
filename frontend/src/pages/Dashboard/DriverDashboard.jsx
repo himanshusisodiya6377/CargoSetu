@@ -7,29 +7,8 @@ import { TbTruckDelivery } from "react-icons/tb";
 import { FiCheckCircle, FiEye } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
 import { MdOutlineGavel } from "react-icons/md";
-
-const STATUS_COLORS ={
-  PAYMENT_PENDING: "bg-orange-100 text-orange-700",
-  ASSIGNED:   "bg-purple-100 text-purple-700",
-  IN_TRANSIT: "bg-orange-100 text-orange-700",
-  DELIVERED:  "bg-green-100 text-green-700",
-};
-
-const STEPS = ["ASSIGNED", "IN_TRANSIT", "DELIVERED"];
-
-const MiniTracker = ({status}) =>{
-  const current = STEPS.indexOf(status);
-  return(
-    <div className="flex items-center gap-1">
-      {STEPS.map((step, i) => (
-        <div key={step} className="flex items-center">
-          <div className={`w-2 h-2 rounded-full ${i <= current ? "bg-green-500" : "bg-gray-200"}`} />
-          {i < STEPS.length-1 && (<div className={`w-6 h-0.5 ${i < current ? "bg-green-500" : "bg-gray-200"}`} />)}
-        </div>
-      ))}
-    </div>
-  );
-};
+import { STATUS_COLORS } from "../../utils/data";
+import TrackingBar from "../../component/common/TrackingBar";
 
 export const DriverDashboard = ()=>{
   const dispatch = useDispatch();
@@ -147,7 +126,7 @@ export const DriverDashboard = ()=>{
                         ₹{bid.amount?.toLocaleString()}
                       </td>
                       <td className="py-3 px-3">
-                        <MiniTracker status={status} />
+                        <TrackingBar status={status} compact />
                       </td>
                       <td className="py-3 px-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[status] ?? "bg-gray-100 text-gray-600"}`}>

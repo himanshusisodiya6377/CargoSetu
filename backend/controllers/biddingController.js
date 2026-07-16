@@ -64,7 +64,7 @@ const placeBid =async(req,res) =>{
         message: "Bidding time window is closed",
       })}
 
-    // driver must not already have an active (non-DELIVERED) load
+    // driver must not already have an active load
     const activeLoad = await Load.findOne({ assignedDriver: driverId, status: { $nin: ["DELIVERED", "ENDED"] }});
     if(activeLoad){
       return res.status(400).json({
@@ -100,7 +100,6 @@ const placeBid =async(req,res) =>{
       }
     } catch (emailErr) {
       console.error("Failed to send bid placed email:", emailErr.message);
-      // Don't fail the bid placement if email fails
     }
 
     sendToLoadWatchers(loadId, "newBid", {
@@ -279,7 +278,7 @@ const deleteBidByAdmin = async (req, res)=>{
     const bid = await BiddingLoad.findById(req.params.id);
     if (!bid) return res.status(404).json({message: "Bid not found"});
 
-    const loadId = bid.load;
+    // const loadId = bid.load;
     await bid.deleteOne();
 
     return res.status(200).json({ success: true, message: "Bid deleted by admin" });

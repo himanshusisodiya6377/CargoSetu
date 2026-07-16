@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BACKEND_URL } from "../../utils/url";
 
-export const AUTH_URL = `${BACKEND_URL}/users/`;
+const AUTH_URL = `${BACKEND_URL}/users/`;
 
 const register = async (userData) =>{
   const response = await axios.post(`${AUTH_URL}register`, userData,{
@@ -57,18 +57,6 @@ const getUserProfile = async () =>{
   return response.data;
 };
 
-const loginUserAsSeller = async (userData) =>{
-  const response = await axios.post(
-    `${AUTH_URL}sender`,
-    userData,
-    {
-      withCredentials: true,
-    }
-  );
-
-  return response.data;
-};
-
 const getAllUser = async () =>{
    const token = localStorage.getItem("token");
   const response = await axios.get(`${AUTH_URL}users`, {headers: {
@@ -108,6 +96,6 @@ const becomeSender = async () => {
   return response.data;
 };
 
-const authService ={register,login,logout,getLoginStatus,getUserProfile,loginUserAsSeller,getAllUser,updateProfile,deleteUser,becomeSender};
+const authService ={register,login,logout,getLoginStatus,getUserProfile,getAllUser,updateProfile,deleteUser,becomeSender};
 
 export default authService;

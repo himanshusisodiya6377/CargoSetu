@@ -3,16 +3,8 @@ import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMyBids, updateMyBid, deleteMyBid } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
-import { FiEdit2, FiTrash2, FiEye, FiCheck, FiX } from "react-icons/fi";
-
-const STATUS_BADGE = {
-  OPEN:       "bg-blue-100 text-blue-700",
-  BIDDING:    "bg-yellow-100 text-yellow-700",
-  PAYMENT_PENDING: "bg-orange-100 text-orange-700",
-  ASSIGNED:   "bg-purple-100 text-purple-700",
-  IN_TRANSIT: "bg-orange-100 text-orange-700",
-  DELIVERED:  "bg-green-100 text-green-700",
-};
+import { FaTrash, FaEdit } from "react-icons/fa";
+import { STATUS_COLORS as STATUS_BADGE } from "../../utils/data";
 
 const MyBids = ()=>{
   useRedirectLoggedOutUser("/login");

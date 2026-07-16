@@ -1,7 +1,7 @@
 import { useState,useEffect,useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AiOutlineMenu,AiOutlineClose } from "react-icons/ai";
-import { Container,CustomNavLink,CustomNavLinkList,ProfileCard } from "../../routes";
+import { Container,CustomNavLink,ProfileCard } from "../../routes";
 import logo from "../../../public/logo.png";
 import { menulists } from "../../utils/data.jsx";
 import { User1 } from "../hero/Hero";
@@ -51,7 +51,6 @@ const Header = () =>{
   const {user} = useSelector((state) => state.auth);
 
   const {role} = useUserProfile();
-  // console.log(role)
 
   const textColor = isScrolled || !isHomePage ? "text-slate-800" : "text-white";
 

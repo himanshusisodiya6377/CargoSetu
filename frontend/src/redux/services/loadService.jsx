@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BACKEND_URL } from "../../utils/url";
 
-export const LOAD_URL = `${BACKEND_URL}/Loads/`;
+const LOAD_URL = `${BACKEND_URL}/Loads/`;
 
 const createLoad = async (formData) =>{
   const response = await axios.post(LOAD_URL, formData, {

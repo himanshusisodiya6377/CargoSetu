@@ -9,44 +9,8 @@ import { toast } from "react-toastify";
 import { FiPackage, FiTruck, FiCheckCircle, FiCreditCard, FiCheck } from "react-icons/fi";
 import { BACKEND_URL } from "../../utils/url";
 import { useWebSocket } from "../../hooks/useWebSocket";
-
-const STEPS = [
-  { key: "ASSIGNED",   label: "Assigned",   Icon: FiPackage },
-  { key: "IN_TRANSIT", label: "In Transit",  Icon: FiTruck },
-  { key: "DELIVERED",  label: "Delivered",   Icon: FiCheckCircle },
-];
-
-const TrackingBar = ({status}) =>{
-  const current = STEPS.findIndex((s) => s.key === status);
-  return (
-    <div className="flex items-center w-full gap-2">
-      {STEPS.map(({ key, label, Icon }, i)=>(
-        <div key={key} className="flex items-center flex-1 last:flex-none">
-          <div className="flex flex-col items-center gap-2 flex-1">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center border-3 transition-all font-semibold ${
-                i < current  
-                  ? "bg-green-500 border-green-500 text-white shadow-md" 
-                  : i === current 
-                  ? "bg-blue-500 border-blue-600 text-white shadow-lg animate-pulse" 
-                  : "bg-gray-100 border-gray-300 text-gray-400"
-              }`}>
-              <Icon size={20} />
-            </div>
-            <span className={`text-xs font-semibold whitespace-nowrap transition-all ${
-              i <= current ? "text-green-600" : "text-gray-400"
-            }`}>{label}</span>
-          </div>
-          {i < STEPS.length - 1 && (
-            <div className={`flex-1 h-1 mx-1 rounded-full transition-all ${
-              i < current ? "bg-green-500" : i === current ? "bg-blue-500" : "bg-gray-300"
-            }`}/>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-};
+import TrackingBar from "../../component/common/TrackingBar";
+import { FALLBACK_IMAGE } from "../../utils/data";
 
 export const LoadDetailsPage = () =>{
   const [activeTab, setActiveTab] = useState("description");
@@ -251,7 +215,7 @@ export const LoadDetailsPage = () =>{
           {/* IMAGE */}
           <div className="lg:w-1/2">
             <div className="h-64 sm:h-[70vh]">
-              <img src={ load?.images?.[0]?.url || "https://bidout-wp.b-cdn.net/wp-content/uploads/2022/10/Image-14.jpg"} alt={load?.title} className="w-full h-full object-cover rounded-xl"/>
+              <img src={ load?.images?.[0]?.url || FALLBACK_IMAGE} alt={load?.title} className="w-full h-full object-cover rounded-xl"/>
             </div>
           </div>
 
@@ -350,12 +314,12 @@ export const LoadDetailsPage = () =>{
               <div className="mt-6 p-6 bg-green-50 border-2 border-green-200 rounded-xl">
                 <div className="flex items-center gap-3">
                   <img
-                    src={load.assignedDriver.photo || "https://bidout-wp.b-cdn.net/wp-content/uploads/2022/10/Image-14.jpg"}
+                    src={load.assignedDriver.photo || FALLBACK_IMAGE}
                     alt={load.assignedDriver.name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-green-300"
                   />
                   <div>
-                    <p className="text-sm font-bold text-green-800">🏆 Winner Driver</p>
+                    <p className="text-sm font-bold text-green-800">Winner Driver</p>
                     <p className="text-base font-semibold text-gray-800">{load.assignedDriver.name}</p>
                     <p className="text-xs text-gray-500">{load.assignedDriver.email}</p>
                   </div>
@@ -435,11 +399,11 @@ export const LoadDetailsPage = () =>{
               <div className="mt-8 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">📍 Delivery Tracking</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">Delivery Tracking</p>
                     <p className="text-sm text-gray-600">Track your shipment progress in real-time</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-600">{load?.status === "DELIVERED" ? "✓" : load?.status === "IN_TRANSIT" ? "🚚" : "📦"}</p>
+                    <p className="text-2xl font-bold text-blue-600">{load?.status === "DELIVERED" ? <FiCheckCircle size={28} /> : load?.status === "IN_TRANSIT" ? <FiTruck size={28} /> : <FiPackage size={28} />}</p>
                   </div>
                 </div>
                 
@@ -454,7 +418,7 @@ export const LoadDetailsPage = () =>{
                         onClick={() => handleTrackingUpdate(load._id, "IN_TRANSIT")} 
                         className="flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105"
                       >
-                        🚚 Start Transit
+                        Start Transit
                       </button>
                     )}
                     {load.status === "IN_TRANSIT" && (
@@ -462,7 +426,7 @@ export const LoadDetailsPage = () =>{
                         onClick={() => handleTrackingUpdate(load._id, "DELIVERED")} 
                         className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105"
                       >
-                        ✅ Mark as Delivered
+                        Mark as Delivered
                       </button>
                     )}
                     {load.status === "DELIVERED" && (
@@ -613,7 +577,7 @@ export const AuctionHistory = ({bids = []})=>{
                 <tr key={bid._id} className={`border-b ${index === 0 ? 'bg-green-50' : 'hover:bg-gray-50'}`}>
                   <td className="px-4 py-3">
                     <span className={`font-bold ${index === 0 ? 'text-green-600' : ''}`}>
-                      {index === 0 ? '🏆 Lowest' : `#${index + 1}`}
+                      {index === 0 ? 'Lowest' : `#${index + 1}`}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-medium">{bid?.driver?.name || "Unknown"}</td>

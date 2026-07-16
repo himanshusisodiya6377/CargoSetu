@@ -4,15 +4,7 @@ import { fetchAdminLoads,deleteAdminLoad,fetchLoadBids,deleteBidAdmin} from "../
 import { NavLink } from "react-router-dom";
 import { FiTrash2, FiEye } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
-
-const STATUS_COLORS ={
-  OPEN: "bg-blue-100 text-blue-700",
-  BIDDING: "bg-yellow-100 text-yellow-700",
-  ENDED: "bg-gray-100 text-gray-600",
-  ASSIGNED: "bg-purple-100 text-purple-700",
-  IN_TRANSIT: "bg-orange-100 text-orange-700",
-  DELIVERED: "bg-green-100 text-green-700",
-};
+import { STATUS_COLORS } from "../../utils/data";
 
 export const AdminLoadManagement = () =>{
   const dispatch = useDispatch();
@@ -130,7 +122,7 @@ export const AdminLoadManagement = () =>{
                 Bids — {bidsModal.loadTitle}
               </h3>
               <button onClick={() => setBidsModal({open: false, loadId: null, loadTitle: ""})} className="text-gray-400 hover:text-gray-600 text-xl leading-none">
-                ✕
+                x
               </button>
             </div>
 

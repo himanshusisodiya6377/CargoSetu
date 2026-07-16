@@ -17,10 +17,7 @@ const updateCommissionConfig = async (req, res) => {
       return res.status(400).json({ message: "Commission percentage must be between 0 and 100" });
     }
 
-    let config = await CommissionConfig.findOne();
-    if (!config) {
-      config = new CommissionConfig();
-    }
+    const config = await CommissionConfig.getConfig();
     config.percentage = percentage;
     await config.save();
 
@@ -38,9 +35,12 @@ const getRevenueDashboard = async (req, res) => {
       .populate("driver", "name email")
       .sort({ paidAt: -1 });
 
-    const totalCommission = payments.reduce((sum, p) => sum + (p.commissionAmount || 0), 0);
-    const totalDriverEarnings = payments.reduce((sum, p) => sum + (p.driverAmount || 0), 0);
-    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    let totalCommission = 0, totalDriverEarnings = 0, totalRevenue = 0;
+    for (const p of payments) {
+      totalCommission += p.commissionAmount || 0;
+      totalDriverEarnings += p.driverAmount || 0;
+      totalRevenue += p.amount || 0;
+    }
 
     return res.status(200).json({
       success: true,

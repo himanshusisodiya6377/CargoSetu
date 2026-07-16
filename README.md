@@ -1,4 +1,4 @@
-# CargoSetu 🚛
+# CargoSetu
 
 ### Smart Logistics & Freight Bidding Platform
 
@@ -8,9 +8,9 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-## ✨ Features
+## Features
 
-### 👤 Authentication & User Management
+### Authentication & User Management
 
 * Secure user registration and login
 * JWT-based authentication
@@ -23,7 +23,7 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-### 📦 Load Management
+### Load Management
 
 * Create freight loads
 * Update existing loads
@@ -37,7 +37,7 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-### 💰 Live Bidding System
+### Live Bidding System
 
 * Drivers can place bids on loads
 * Update existing bids
@@ -50,7 +50,7 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-### 🚚 Shipment Tracking
+### Shipment Tracking
 
 * Real-time shipment status updates
 * Driver tracking status updates
@@ -59,7 +59,7 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-### 💳 Secure Payments
+### Secure Payments
 
 * Razorpay payment integration
 * Secure payment verification
@@ -68,7 +68,7 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-### 📈 Admin Dashboard
+### Admin Dashboard
 
 * Manage users
 * Manage loads
@@ -79,14 +79,14 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-### 📧 Contact System
+### Contact System
 
 * Contact form submission
 * Customer support requests
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 
@@ -115,7 +115,7 @@ The platform streamlines freight booking, bidding, payment, shipment tracking, a
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 CargoSetu
@@ -142,7 +142,7 @@ CargoSetu
 
 ---
 
-## 🔐 User Roles
+## User Roles
 
 ### Sender
 
@@ -171,7 +171,7 @@ CargoSetu
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Clone Repository
 
@@ -206,7 +206,7 @@ npm run dev
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
 ### Backend (.env)
 
@@ -236,7 +236,7 @@ VITE_BACKEND_URL=
 
 ---
 
-## 🔄 Application Workflow
+## Application Workflow
 
 1. User registers and logs in.
 2. A sender posts a freight load with shipment details.
@@ -248,7 +248,7 @@ VITE_BACKEND_URL=
 
 ---
 
-## 📌 Key Highlights
+## Key Highlights
 
 * Role-Based Access Control (RBAC)
 * RESTful API Architecture
@@ -265,7 +265,7 @@ VITE_BACKEND_URL=
 
 ---
 
-## 📈 Future Improvements
+## Future Improvements
 
 * Live location tracking using GPS
 * Real-time notifications with WebSockets
@@ -280,6 +280,6 @@ VITE_BACKEND_URL=
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 Developed as a full-stack logistics marketplace project to demonstrate modern web development concepts, scalable backend architecture, secure authentication, payment integration, and real-world logistics workflow automation.

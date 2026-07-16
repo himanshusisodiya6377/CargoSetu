@@ -8,16 +8,7 @@ import { AdminDashboard } from "./AdminDashboard";
 import { FiPackage, FiEye, FiEdit2 } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
 import { DriverDashboard } from "./DriverDashboard";
-
-const STATUS_COLORS ={
-  OPEN:           "bg-blue-100 text-blue-700",
-  BIDDING:        "bg-yellow-100 text-yellow-700",
-  PAYMENT_PENDING:"bg-orange-100 text-orange-700",
-  ASSIGNED:       "bg-purple-100 text-purple-700",
-  ENDED:          "bg-gray-100 text-gray-600",
-  IN_TRANSIT:     "bg-orange-100 text-orange-700",
-  DELIVERED:      "bg-green-100 text-green-700",
-};
+import { STATUS_COLORS } from "../../utils/data";
 
 export const Dashboard = () =>{
   useRedirectLoggedOutUser("/login");

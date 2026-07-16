@@ -5,14 +5,7 @@ import { Caption, Title } from "../../routes/index";
 import { commonClassNameOfInput } from "../../component/common/Design";
 import { updateLoad, getLoad } from "../../redux/features/loadSlice";
 import { toast } from "react-toastify";
-
-const BID_DURATIONS = [
-  { value: "30", label: "30 minutes" },
-  { value: "60", label: "1 hour" },
-  { value: "120", label: "2 hours" },
-  { value: "360", label: "6 hours" },
-  { value: "1440", label: "24 hours" },
-];
+import { BID_DURATIONS } from "../../utils/data";
 
 export const LoadEdit = ()=>{
   const dispatch = useDispatch();

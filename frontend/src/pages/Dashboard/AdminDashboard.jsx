@@ -7,21 +7,12 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import { FiUsers, FiPackage, FiEye } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
 import { BsCashCoin } from "react-icons/bs";
+import { STATUS_COLORS } from "../../utils/data";
 
 const ROLE_COLORS ={
   Sender: "bg-blue-100 text-blue-700",
   Driver: "bg-green-100 text-green-700",
   Admin:  "bg-purple-100 text-purple-700",
-};
-
-const STATUS_COLORS ={
-  OPEN:           "bg-blue-100 text-blue-700",
-  BIDDING:        "bg-yellow-100 text-yellow-700",
-  PAYMENT_PENDING:"bg-orange-100 text-orange-700",
-  ASSIGNED:       "bg-purple-100 text-purple-700",
-  ENDED:          "bg-gray-100 text-gray-600",
-  IN_TRANSIT:     "bg-orange-100 text-orange-700",
-  DELIVERED:      "bg-green-100 text-green-700",
 };
 
 export const AdminDashboard = () =>{

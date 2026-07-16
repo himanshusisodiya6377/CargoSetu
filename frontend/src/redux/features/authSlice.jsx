@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+﻿import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import authService from "../services/authFeature";
 import { toast } from "react-toastify";
 
@@ -99,22 +99,6 @@ export const getUserProfile = createAsyncThunk(
 );
 
 
-export const loginUserAsSeller = createAsyncThunk(
-  "auth/loginAsSeller",
-  async (userData, thunkAPI) => {
-    try {
-      return await authService.loginUserAsSeller(userData);
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error.message ||
-        error.toString();
-
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
 export const getAllUsers = createAsyncThunk(
   "auth/getAllUsers",
   async (_, thunkAPI) => {
@@ -180,11 +164,6 @@ const authSlice = createSlice({
       state.message = "";
     },
 
-    LOGOUT(state){
-      state.user = null;
-      state.isLoggedIn = false;
-      localStorage.removeItem("user");
-    },
   },
 
   extraReducers: (builder) =>{
@@ -287,25 +266,6 @@ const authSlice = createSlice({
         localStorage.removeItem("user");
         })
 
-      .addCase(loginUserAsSeller.pending, (state) => {
-        state.isLoading = true;
-      })
-
-      .addCase(loginUserAsSeller.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isLoggedIn = true;
-        state.user = action.payload;
-
-        localStorage.setItem("user", JSON.stringify(action.payload));
-        toast.success("Logged in as Seller");
-      })
-
-      .addCase(loginUserAsSeller.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-        toast.error(action.payload);
-      })
 
       .addCase(getAllUsers.pending, (state) => {
         state.isLoading = true;
@@ -372,9 +332,8 @@ const authSlice = createSlice({
         },
       });
 
-export const {RESET, LOGOUT} = authSlice.actions;
+export const {RESET} = authSlice.actions;
 export default authSlice.reducer;
 
 export const selectIsLoggedIn = (state) => state.auth.isLoggedIn;
-export const selectUser = (state) => state.auth.user;
-export const selectIsSuccess = (state) => state.auth.isSuccess;
+

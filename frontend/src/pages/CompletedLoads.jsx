@@ -52,7 +52,7 @@ const CompletedLoads = () =>{
                   const statusBadge = {
                     ASSIGNED:  { color: "bg-purple-100 text-purple-700", label: "Assigned" },
                     ENDED:     { color: "bg-gray-100 text-gray-600",   label: "Ended — No bids" },
-                    DELIVERED: { color: "bg-green-100 text-green-700", label: "✔ Delivered" },
+                    DELIVERED: { color: "bg-green-100 text-green-700", label: "Delivered" },
                   }[load.status] || { color: "bg-gray-100 text-gray-600", label: load.status };
 
                   return (

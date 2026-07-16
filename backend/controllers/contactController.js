@@ -1,3 +1,4 @@
+const validator = require("validator");
 const sendEmail = require("../utils/sendEmail");
 
 const submitContact = async (req, res)=>{
@@ -8,9 +9,7 @@ const submitContact = async (req, res)=>{
       return res.status(400).json({ message: "Name, email, subject, and message are required." });
     }
 
-    // Basic email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if(!emailRegex.test(email)){
+    if(!validator.isEmail(email)){
       return res.status(400).json({message: "Invalid email address."});
     }
 

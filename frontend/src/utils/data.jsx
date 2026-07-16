@@ -262,6 +262,26 @@ export const contactInfo =[
 export const vehicleOptions = ["TRUCK", "CONTAINER", "MINI_TRUCK", "PICKUP", "TRAILER"];
 export const cargoOptions   = ["GENERAL", "HEAVY", "FRAGILE", "REFRIGERATED", "HAZARDOUS"];
 
+export const BID_DURATIONS = [
+  { value: "30", label: "30 minutes" },
+  { value: "60", label: "1 hour" },
+  { value: "120", label: "2 hours" },
+  { value: "360", label: "6 hours" },
+  { value: "1440", label: "24 hours" },
+];
+
+export const STATUS_COLORS = {
+  OPEN:           "bg-blue-100 text-blue-700",
+  BIDDING:        "bg-yellow-100 text-yellow-700",
+  PAYMENT_PENDING:"bg-orange-100 text-orange-700",
+  ASSIGNED:       "bg-purple-100 text-purple-700",
+  ENDED:          "bg-gray-100 text-gray-600",
+  IN_TRANSIT:     "bg-orange-100 text-orange-700",
+  DELIVERED:      "bg-green-100 text-green-700",
+};
+
+export const FALLBACK_IMAGE = "https://bidout-wp.b-cdn.net/wp-content/uploads/2022/10/Image-14.jpg";
+
 export const services = [
   {
     icon: <FiPackage size={28} />,

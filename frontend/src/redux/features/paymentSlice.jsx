@@ -4,7 +4,6 @@ import { toast } from "react-toastify";
 
 const initialState = {
   payment: null,
-  payments: [],
   isLoading: false,
   isError: false,
   message: "",
@@ -46,28 +45,10 @@ export const fetchPaymentDetails = createAsyncThunk(
   }
 );
 
-export const fetchPaymentHistory = createAsyncThunk(
-  "payment/fetchHistory",
-  async (_, thunkAPI) => {
-    try {
-      return await paymentService.getPaymentHistory();
-    } catch (error) {
-      const message = error.response?.data?.message || error.message;
-      return thunkAPI.rejectWithValue(message);
-    }
-  }
-);
-
 const paymentSlice = createSlice({
   name: "payment",
   initialState,
   reducers: {
-    resetPayment: (state) => {
-      state.payment = null;
-      state.isLoading = false;
-      state.isError = false;
-      state.message = "";
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -110,20 +91,7 @@ const paymentSlice = createSlice({
         state.isError = true;
         state.message = action.payload;
       })
-      .addCase(fetchPaymentHistory.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(fetchPaymentHistory.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.payments = action.payload.data;
-      })
-      .addCase(fetchPaymentHistory.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload;
-      });
   },
 });
 
-export const { resetPayment } = paymentSlice.actions;
 export default paymentSlice.reducer;
