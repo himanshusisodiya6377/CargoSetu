@@ -537,7 +537,7 @@ export const LoadDetailsPage = () =>{
                   </div>
 
                   <div className="h-[400px]">
-                    <img src={load?.images?.[0]?.url || "https://bidout-wp.b-cdn.net/wp-content/uploads/2022/10/Image-14.jpg"} alt={load?.title} className="w-full h-full object-cover rounded-xl"/>
+                    <img src={load?.images?.[0]?.url || FALLBACK_IMAGE} alt={load?.title} className="w-full h-full object-cover rounded-xl"/>
                   </div>
                 </div>
               </div>)}
