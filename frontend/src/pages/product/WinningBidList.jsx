@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Title } from "../../routes/index";
 import { getWonBids, updateTracking } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import { FiPackage, FiTruck, FiCheckCircle } from "react-icons/fi";
 import TrackingBar from "../../component/common/TrackingBar";
 
@@ -17,6 +18,12 @@ export const WinningBidList = ()=>{
   useEffect(()=>{
     dispatch(getWonBids());
   },[dispatch]);
+
+  useWebSocket(null, {
+    loadUpdate: useCallback(() => { dispatch(getWonBids()); }, [dispatch]),
+    bidWon: useCallback(() => { dispatch(getWonBids()); }, [dispatch]),
+    trackingUpdate: useCallback(() => { dispatch(getWonBids()); }, [dispatch]),
+  });
 
   const handleStatusUpdate =(loadId,status)=>{
     const label = status === "IN_TRANSIT" ? "mark as In Transit" : "mark as Delivered";

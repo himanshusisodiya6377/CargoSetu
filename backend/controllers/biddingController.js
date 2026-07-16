@@ -81,6 +81,30 @@ const placeBid =async(req,res) =>{
         message: `Your bid must be ₹${lowestBid.amount} or lower`,
       })}
 
+    // Check if driver already has a bid on this load → update it
+    const existingBid = await BiddingLoad.findOne({ load: loadId, driver: driverId, status: "ACTIVE" });
+    if (existingBid) {
+      existingBid.amount = amount;
+      await existingBid.save();
+
+      sendToLoadWatchers(loadId, "newBid", {
+        loadId,
+        bid: {
+          _id: existingBid._id,
+          driver: { _id: driverId, name: req.user.name },
+          amount,
+          createdAt: existingBid.createdAt,
+          updatedAt: existingBid.updatedAt,
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Bid updated successfully",
+        bid: existingBid,
+      });
+    }
+
     // create new bid
     const bid = await BiddingLoad.create({
       load: loadId,
@@ -199,6 +223,9 @@ const updateTrackingStatus = async (req, res)=>{
       }
     }
 
+    sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
+      loadId: load._id, status: load.status, deliveryDate: load.deliveryDate,
+    });
     sendToUser(load.sender._id.toString(), "trackingUpdate", {
       loadId: load._id, status: load.status, deliveryDate: load.deliveryDate,
     });

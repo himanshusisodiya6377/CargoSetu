@@ -1,6 +1,6 @@
 import { Body, Caption, Container, Title } from "../../routes/index";
 import { commonClassNameOfInput } from "../../component/common/Design";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { getLoad, placeBid, updateTracking } from "../../redux/features/loadSlice";
@@ -13,12 +13,49 @@ import TrackingBar from "../../component/common/TrackingBar";
 import { FALLBACK_IMAGE } from "../../utils/data";
 import axios from "axios";
 
+const Shimmer = ({ className }) => <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
+
+const LoadSkeleton = () => (
+  <section className="pt-24 px-4 sm:px-8">
+    <Container>
+      <div className="flex flex-col lg:flex-row gap-10">
+        <div className="lg:w-1/2">
+          <Shimmer className="h-64 sm:h-[70vh] w-full rounded-xl" />
+        </div>
+        <div className="lg:w-1/2 space-y-5">
+          <Shimmer className="h-8 w-3/4" />
+          <div className="flex gap-2">
+            <Shimmer className="h-6 w-20 rounded-full" />
+            <Shimmer className="h-6 w-40 rounded-full" />
+          </div>
+          <div className="flex gap-6 p-4 bg-gray-50 rounded-xl">
+            <div className="space-y-2"><Shimmer className="h-3 w-12" /><Shimmer className="h-6 w-20" /></div>
+            <div className="w-px bg-gray-200" />
+            <div className="space-y-2"><Shimmer className="h-3 w-12" /><Shimmer className="h-6 w-20" /></div>
+            <div className="w-px bg-gray-200" />
+            <div className="space-y-2"><Shimmer className="h-3 w-12" /><Shimmer className="h-6 w-12" /></div>
+          </div>
+          <div className="space-y-3">
+            <Shimmer className="h-4 w-20" />
+            <div className="flex gap-3">
+              {[1,2,3,4].map(i => <Shimmer key={i} className="h-16 w-16 rounded-lg" />)}
+            </div>
+          </div>
+          <Shimmer className="h-24 w-full rounded-lg" />
+        </div>
+      </div>
+    </Container>
+  </section>
+);
+
 export const LoadDetailsPage = () =>{
   const [activeTab, setActiveTab] = useState("description");
   const [bidAmount, setBidAmount] = useState("");
   const [isLoadingBid, setIsLoadingBid] = useState(false);
   const [bids, setBids] = useState([]);
   const [paymentInfo, setPaymentInfo] = useState(null);
+  const [flashBidId, setFlashBidId] = useState(null);
+  const flashTimer = useRef(null);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -45,17 +82,37 @@ export const LoadDetailsPage = () =>{
     }
   };
 
+  const flashBid = (bidId) => {
+    setFlashBidId(bidId);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlashBidId(null), 2000);
+  };
+
   useWebSocket(id, {
     newBid: (event) => {
       setBids((prev) => {
-        const exists = prev.some((b) => b._id === event.bid._id);
-        if (exists) return prev;
+        const idx = prev.findIndex((b) => b._id === event.bid._id);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], ...event.bid };
+          flashBid(event.bid._id);
+          return updated.sort(
+            (a, b) => new Date(b.createdAt || b.bidTime) - new Date(a.createdAt || a.bidTime)
+          );
+        }
+        flashBid(event.bid._id);
         return [...prev, event.bid].sort(
           (a, b) => new Date(b.createdAt || b.bidTime) - new Date(a.createdAt || a.bidTime)
         );
       });
     },
     loadStatusChange: (event) => {
+      dispatch(getLoad(id));
+    },
+    trackingUpdate: (event) => {
+      dispatch(getLoad(id));
+    },
+    bidWon: () => {
       dispatch(getLoad(id));
     },
   });
@@ -204,9 +261,19 @@ export const LoadDetailsPage = () =>{
     dispatch(updateTracking({ loadId, status }));
   }};
 
-  if(isLoading) return <p className="pt-24 text-center">Loading...</p>;
+  if(isLoading) return <LoadSkeleton />;
 
-  if(!load) return <p className="pt-24 text-center">Load not found</p>;
+  if(!load) return (
+    <section className="pt-24 px-4 sm:px-8">
+      <Container>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="text-6xl mb-4 text-gray-300">📦</div>
+          <Title level={3} className="text-gray-500">Load not found</Title>
+          <Caption className="text-gray-400 mt-2">This load may have been removed or doesn't exist.</Caption>
+        </div>
+      </Container>
+    </section>
+  );
 
   const auctionEndUTC = load?.bidEndTime ? new Date(load.bidEndTime).toUTCString() : null;
 
@@ -295,8 +362,16 @@ export const LoadDetailsPage = () =>{
                     step="1"
                     disabled={isLoadingBid}
                   />
-                  <button type="submit" disabled={isLoadingBid} className="bg-green text-white px-6 py-3 rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                    {isLoadingBid ? "Placing..." : "Submit Bid"}
+                  <button type="submit" disabled={isLoadingBid} className="bg-green text-white px-6 py-3 rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center justify-center gap-2 min-w-[130px]">
+                    {isLoadingBid ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        Placing...
+                      </>
+                    ) : "Submit Bid"}
                   </button>
                 </form>
                 {lowestBid && (
@@ -548,7 +623,7 @@ export const LoadDetailsPage = () =>{
               </div>)}
 
             {activeTab === "auctionHistory" && (
-              <AuctionHistory bids={sortedBids} />
+              <AuctionHistory bids={sortedBids} flashBidId={flashBidId} userId={user?._id} />
             )}
           </div>
         </div>
@@ -557,41 +632,102 @@ export const LoadDetailsPage = () =>{
   );
 };
 
-export const AuctionHistory = ({bids = []})=>{
+const timeAgo = (date) => {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return new Date(date).toLocaleString();
+};
+
+export const AuctionHistory = ({bids = [], flashBidId, userId})=>{
   return (
     <div className="bg-white border rounded-xl shadow-sm p-6">
-      <Title level={5}>Auction History - {bids.length} Bids</Title>
-      <div className="mt-4 overflow-x-auto">
+      <div className="flex items-center justify-between mb-4">
+        <Title level={5}>Auction History — {bids.length} Bid{bids.length !== 1 ? "s" : ""}</Title>
+        {bids.length > 0 && (
+          <span className="text-xs text-gray-400">
+            Lowest: <span className="text-green font-bold">₹{Math.min(...bids.map(b => b.amount)).toLocaleString()}</span>
+          </span>
+        )}
+      </div>
+      <div className="mt-2 overflow-x-auto">
         {bids.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No bids placed yet. Be the first to bid!</p>
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <svg className="w-12 h-12 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm font-medium">No bids placed yet</p>
+            <p className="text-xs mt-1">Be the first to bid!</p>
           </div>
         ) : (
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-100 text-gray-600 sticky top-0">
               <tr>
-                <th className="px-4 py-3">Bid Rank</th>
-                <th className="px-4 py-3">Driver Name</th>
-                <th className="px-4 py-3">Bid Amount</th>
-                <th className="px-4 py-3">Time</th>
+                <th className="px-4 py-3 text-xs uppercase tracking-wider">Rank</th>
+                <th className="px-4 py-3 text-xs uppercase tracking-wider">Driver</th>
+                <th className="px-4 py-3 text-xs uppercase tracking-wider">Bid Amount</th>
+                <th className="px-4 py-3 text-xs uppercase tracking-wider">Time</th>
               </tr>
             </thead>
 
             <tbody>
-              {bids.map((bid, index)=>(
-                <tr key={bid._id} className={`border-b ${index === 0 ? 'bg-green-50' : 'hover:bg-gray-50'}`}>
-                  <td className="px-4 py-3">
-                    <span className={`font-bold ${index === 0 ? 'text-green-600' : ''}`}>
-                      {index === 0 ? 'Lowest' : `#${index + 1}`}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-medium">{bid?.driver?.name || "Unknown"}</td>
-                  <td className="px-4 py-3 font-bold text-green">₹{bid.amount}</td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {new Date(bid.createdAt || bid.bidTime).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
+              {bids.map((bid, index)=> {
+                const isLowest = index === 0;
+                const isCurrentDriver = userId && bid.driver?._id === userId;
+                const isFlashing = flashBidId === bid._id;
+
+                return (
+                  <tr key={bid._id}
+                    className={`border-b transition-all duration-700 ${
+                      isFlashing
+                        ? 'bg-yellow-100'
+                        : isLowest
+                          ? 'bg-green-50'
+                          : 'hover:bg-gray-50'
+                    } ${isCurrentDriver ? 'ring-1 ring-inset ring-green-300' : ''}`}
+                  >
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 font-bold text-xs ${
+                        isLowest ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        {isLowest && (
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" />
+                          </svg>
+                        )}
+                        {isLowest ? "Lowest" : `#${index + 1}`}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {bid.driver?.photo && (
+                          <img src={bid.driver.photo} alt="" className="w-6 h-6 rounded-full object-cover" />
+                        )}
+                        <span className={`font-medium truncate max-w-[120px] ${isCurrentDriver ? 'text-green-700' : ''}`}>
+                          {bid.driver?.name || "Unknown"}
+                          {isCurrentDriver && (
+                            <span className="ml-1.5 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-semibold">You</span>
+                          )}
+                        </span>
+                      </div>
+                    </td>
+                    <td className={`px-4 py-3 font-bold ${isLowest ? 'text-green' : 'text-gray-800'}`}>
+                      <span className={isFlashing ? 'text-yellow-600' : ''}>
+                        ₹{bid.amount?.toLocaleString()}
+                      </span>
+                      {bid.updatedAt && bid.createdAt !== bid.updatedAt && (
+                        <span className="ml-1.5 text-[10px] text-gray-400 font-normal">(updated)</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                      {timeAgo(bid.createdAt || bid.bidTime)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
