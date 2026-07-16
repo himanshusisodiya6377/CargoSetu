@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMyBids, updateMyBid, deleteMyBid } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { STATUS_COLORS as STATUS_BADGE } from "../../utils/data";
 
@@ -16,6 +17,12 @@ const MyBids = ()=>{
   useEffect(()=>{
     dispatch(fetchMyBids());
   },[dispatch]);
+
+  useWebSocket(null, {
+    bidWon: useCallback(() => { dispatch(fetchMyBids()); }, [dispatch]),
+    loadUpdate: useCallback(() => { dispatch(fetchMyBids()); }, [dispatch]),
+    loadStatusChange: useCallback(() => { dispatch(fetchMyBids()); }, [dispatch]),
+  });
 
   const canModify =(bid)=>
     bid.load?.status === "OPEN" && new Date(bid.load?.bidEndTime) > new Date();

@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAdminLoads,deleteAdminLoad,fetchLoadBids,deleteBidAdmin} from "../../redux/features/loadSlice";
 import { NavLink } from "react-router-dom";
 import { FiTrash2, FiEye } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
 import { STATUS_COLORS } from "../../utils/data";
+import { useWebSocket } from "../../hooks/useWebSocket";
 
 export const AdminLoadManagement = () =>{
   const dispatch = useDispatch();
@@ -18,6 +19,11 @@ export const AdminLoadManagement = () =>{
   useEffect(() =>{
     dispatch(fetchAdminLoads());
   },[dispatch]);
+
+  useWebSocket(null, {
+    loadUpdate: useCallback(() => { dispatch(fetchAdminLoads()); }, [dispatch]),
+    loadStatusChange: useCallback(() => { dispatch(fetchAdminLoads()); }, [dispatch]),
+  });
 
   const confirmDeleteLoad = (id) => setDeleteConfirm({open: true, loadId: id});
 

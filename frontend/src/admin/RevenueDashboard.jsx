@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import commissionService from "../redux/services/commissionService";
+import { useWebSocket } from "../hooks/useWebSocket";
 import { BsCashCoin } from "react-icons/bs";
 import { FiDollarSign, FiPackage, FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -31,6 +32,10 @@ const RevenueDashboard = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useWebSocket(null, {
+    loadUpdate: useCallback(() => { fetchData(); }, []),
+  });
 
   const handleUpdateConfig = async () => {
     const val = parseFloat(newPercentage);

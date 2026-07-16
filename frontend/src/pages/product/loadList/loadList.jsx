@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserLoads, deleteLoad } from "../../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../../hooks/useRedirectLoggedOutUser";
+import { useWebSocket } from "../../../hooks/useWebSocket";
 import { FiPlusCircle, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { STATUS_COLORS } from "../../../utils/data";
 
@@ -15,6 +16,11 @@ const LoadList = () =>{
   useEffect(() =>{
     dispatch(getUserLoads());
   },[dispatch]);
+
+  useWebSocket(null, {
+    loadUpdate: useCallback(() => { dispatch(getUserLoads()); }, [dispatch]),
+    trackingUpdate: useCallback(() => { dispatch(getUserLoads()); }, [dispatch]),
+  });
 
   const delLoad =(id)=>{
     if(window.confirm("Are you sure you want to delete this load?")){

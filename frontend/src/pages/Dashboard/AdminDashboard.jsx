@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllUsers } from "../../redux/features/authSlice";
 import { fetchAdminLoads } from "../../redux/features/loadSlice";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import { useWebSocket } from "../../hooks/useWebSocket";
 import { FiUsers, FiPackage, FiEye } from "react-icons/fi";
 import { TbGavel } from "react-icons/tb";
 import { BsCashCoin } from "react-icons/bs";
@@ -25,6 +26,10 @@ export const AdminDashboard = () =>{
     dispatch(getAllUsers());
     dispatch(fetchAdminLoads());
   },[dispatch]);
+
+  useWebSocket(null, {
+    loadUpdate: useCallback(() => { dispatch(fetchAdminLoads()); }, [dispatch]),
+  });
 
   const allLoads = useMemo(() => adminLoads ?? [],[adminLoads]);
   const allUsers = useMemo(() => users ?? [], [users]);
