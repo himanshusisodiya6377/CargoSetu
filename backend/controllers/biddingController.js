@@ -3,7 +3,7 @@ const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
 const { calculateAndSave } = require("../utils/commission");
 const {sendBidPlacedEmail, sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
-const { sendToLoadWatchers, sendToUser, broadcast } = require("../services/websocketService");
+const { sendToLoadWatchers, sendToUser } = require("../services/websocketService");
 
 const getBiddingHistory = async(req, res) =>{
   try {
@@ -97,7 +97,6 @@ const placeBid =async(req,res) =>{
           updatedAt: existingBid.updatedAt,
         },
       });
-      broadcast("loadUpdate", { loadId, bidUpdate: true });
 
       return res.status(200).json({
         success: true,
@@ -130,7 +129,6 @@ const placeBid =async(req,res) =>{
     sendToLoadWatchers(loadId, "newBid", {
       loadId, bid: { _id: bid._id, driver: { _id: driverId, name: req.user.name }, amount, createdAt: bid.createdAt },
     });
-    broadcast("loadUpdate", { loadId, bidUpdate: true });
 
     return res.status(201).json({
       success: true,
@@ -284,7 +282,6 @@ const updateBid = async (req, res)=>{
         updatedAt: bid.updatedAt,
       },
     });
-    broadcast("loadUpdate", { loadId, bidUpdate: true });
 
     return res.status(200).json({ success: true, message: "Bid updated", data: bid });
   } catch (error) {
@@ -310,7 +307,6 @@ const deleteBid = async (req, res)=>{
     await bid.deleteOne();
 
     sendToLoadWatchers(loadId, "bidDeleted", { loadId, bidId: bid._id });
-    broadcast("loadUpdate", { loadId, bidDeleted: true });
 
     return res.status(200).json({ success: true, message: "Bid withdrawn" });
   } catch (error) {
@@ -328,7 +324,6 @@ const deleteBidByAdmin = async (req, res)=>{
     await bid.deleteOne();
 
     sendToLoadWatchers(loadId, "bidDeleted", { loadId, bidId: bid._id });
-    broadcast("loadUpdate", { loadId, bidDeleted: true });
 
     return res.status(200).json({ success: true, message: "Bid deleted by admin" });
   } catch (error) {
