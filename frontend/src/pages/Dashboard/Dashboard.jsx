@@ -28,6 +28,7 @@ export const Dashboard = () =>{
   useWebSocket(null, {
     loadUpdate: useCallback(() => { if (role === "Sender") dispatch(getUserLoads()); }, [dispatch, role]),
     trackingUpdate: useCallback(() => { if (role === "Sender") dispatch(refreshUserLoads()); }, [dispatch, role]),
+    bidsUpdated: useCallback(() => { if (role === "Sender") dispatch(refreshUserLoads()); }, [dispatch, role]),
   });
 
   const stats = useMemo(() =>({

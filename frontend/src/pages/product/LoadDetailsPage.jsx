@@ -253,7 +253,6 @@ export const LoadDetailsPage = () =>{
       if(result.meta.requestStatus === "fulfilled"){
         toast.success("Bid placed successfully");
         setBidAmount("");
-        await fetchBids();
       }else{
         toast.error(result.payload || "Failed to place bid. Try again.");
       }

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Title } from "../../routes/index";
-import { getWonBids, updateTracking } from "../../redux/features/loadSlice";
+import { getWonBids, refreshWonBids, updateTracking } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { FiPackage, FiTruck, FiCheckCircle } from "react-icons/fi";
@@ -22,7 +22,7 @@ export const WinningBidList = ()=>{
   useWebSocket(null, {
     loadUpdate: useCallback(() => { dispatch(getWonBids()); }, [dispatch]),
     bidWon: useCallback(() => { dispatch(getWonBids()); }, [dispatch]),
-    trackingUpdate: useCallback(() => { dispatch(getWonBids()); }, [dispatch]),
+    trackingUpdate: useCallback(() => { dispatch(refreshWonBids()); }, [dispatch]),
   });
 
   const handleStatusUpdate =(loadId,status)=>{

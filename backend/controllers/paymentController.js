@@ -134,12 +134,12 @@ const verifyPayment = async (req, res) => {
       loadId: load._id, title: load.title, amount: payment.amount,
     });
 
-    try {
-      await sendBidWonEmail({ driver: payment.driver, load, finalAmount: payment.amount });
-      await sendLoadAssignedEmail({ sender: load.sender, driver: payment.driver, load, finalAmount: payment.amount });
-    } catch (emailErr) {
-      console.error("Payment confirmation email failed:", emailErr.message);
-    }
+    sendBidWonEmail({ driver: payment.driver, load, finalAmount: payment.amount }).catch(err => {
+      console.error("Bid won email failed:", err.message);
+    });
+    sendLoadAssignedEmail({ sender: load.sender, driver: payment.driver, load, finalAmount: payment.amount }).catch(err => {
+      console.error("Load assigned email failed:", err.message);
+    });
 
     return res.status(200).json({
       success: true,

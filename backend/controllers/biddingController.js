@@ -3,7 +3,7 @@ const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
 const { calculateAndSave } = require("../utils/commission");
 const {sendBidPlacedEmail, sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
-const { sendToLoadWatchers, sendToUser } = require("../services/websocketService");
+const { sendToLoadWatchers, sendToUser, broadcast } = require("../services/websocketService");
 
 const getBiddingHistory = async(req, res) =>{
   try {
@@ -31,6 +31,8 @@ const getBiddingHistory = async(req, res) =>{
 };
 
 async function notifyBidUpdate(load, loadId) {
+  broadcast("bidsUpdated", { loadId });
+  sendToLoadWatchers(loadId, "bidsUpdated", { loadId });
   const senderId = load.sender?.toString();
   if (senderId) sendToUser(senderId, "bidsUpdated", { loadId });
   const admins = await User.find({ role: "Admin" }).select("_id");
@@ -122,19 +124,12 @@ const placeBid =async(req,res) =>{
       amount,
     });
 
-    // Send confirmation email to driver
-    try {
-      const driver = await User.findById(driverId);
-      if (driver) {
-        await sendBidPlacedEmail({
-          driver,
-          load,
-          bidAmount: amount
-        });
-      }
-    } catch (emailErr) {
+    // Send confirmation email to driver (fire-and-forget)
+    User.findById(driverId).then(driver => {
+      if (driver) sendBidPlacedEmail({ driver, load, bidAmount: amount });
+    }).catch(emailErr => {
       console.error("Failed to send bid placed email:", emailErr.message);
-    }
+    });
 
     sendToLoadWatchers(loadId, "newBid", {
       loadId, bid: { _id: bid._id, driver: { _id: driverId, name: req.user.name }, amount, createdAt: bid.createdAt },
@@ -227,17 +222,18 @@ const updateTrackingStatus = async (req, res)=>{
         }
 
       }
-      try{
-        await sendDeliveryConfirmationEmail({sender: load.sender, load});
-      } catch (err) {
+      sendDeliveryConfirmationEmail({sender: load.sender, load}).catch(err => {
         console.error("Delivery email failed:", err.message);
-      }
+      });
     }
 
     sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
       loadId: load._id, status: load.status, deliveryDate: load.deliveryDate,
     });
     sendToUser(load.sender._id.toString(), "trackingUpdate", {
+      loadId: load._id, status: load.status, deliveryDate: load.deliveryDate,
+    });
+    sendToUser(driverId.toString(), "trackingUpdate", {
       loadId: load._id, status: load.status, deliveryDate: load.deliveryDate,
     });
 

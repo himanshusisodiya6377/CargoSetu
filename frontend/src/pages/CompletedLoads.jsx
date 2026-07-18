@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCompletedLoads } from "../redux/features/loadSlice";
+import { fetchCompletedLoads, refreshCompletedLoads } from "../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../hooks/useRedirectLoggedOutUser";
 import { useWebSocket } from "../hooks/useWebSocket";
 
@@ -17,7 +17,7 @@ const CompletedLoads = () =>{
 
   useWebSocket(null, {
     loadUpdate: useCallback(() => { dispatch(fetchCompletedLoads()); }, [dispatch]),
-    trackingUpdate: useCallback(() => { dispatch(fetchCompletedLoads()); }, [dispatch]),
+    trackingUpdate: useCallback(() => { dispatch(refreshCompletedLoads()); }, [dispatch]),
   });
 
   return (

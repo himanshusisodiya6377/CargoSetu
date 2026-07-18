@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getWonBids, fetchCompletedLoads, fetchMyBids, updateTracking } from "../../redux/features/loadSlice";
+import { getWonBids, fetchCompletedLoads, fetchMyBids, refreshWonBids, refreshCompletedLoads, refreshMyBids, updateTracking } from "../../redux/features/loadSlice";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import { TbTruckDelivery } from "react-icons/tb";
@@ -28,10 +28,16 @@ export const DriverDashboard = ()=>{
     dispatch(fetchMyBids());
   }, [dispatch]);
 
+  const silentRefresh = useCallback(() => {
+    dispatch(refreshWonBids());
+    dispatch(refreshCompletedLoads());
+    dispatch(refreshMyBids());
+  }, [dispatch]);
+
   useWebSocket(null, {
     bidWon: refresh,
     loadUpdate: refresh,
-    trackingUpdate: refresh,
+    trackingUpdate: silentRefresh,
   });
 
   const stats = useMemo(() =>{

@@ -151,6 +151,17 @@ export const getWonBids = createAsyncThunk(
   }
 );
 
+export const refreshWonBids = createAsyncThunk(
+  "loads/refreshWonBids",
+  async (_, thunkAPI) => {
+    try {
+      return await loadService.getWonBids();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 export const updateTracking = createAsyncThunk(
   "loads/updateTracking",
   async ({ loadId, status }, thunkAPI) => {
@@ -186,8 +197,24 @@ export const fetchCompletedLoads = createAsyncThunk(
   }
 );
 
+export const refreshCompletedLoads = createAsyncThunk(
+  "loads/refreshCompleted",
+  async (_, thunkAPI) => {
+    try { return await loadService.getCompletedLoads(); }
+    catch (error) { return thunkAPI.rejectWithValue(getErrorMessage(error)); }
+  }
+);
+
 export const fetchMyBids = createAsyncThunk(
   "loads/myBids",
+  async (_, thunkAPI) => {
+    try { return await loadService.getMyBids(); }
+    catch (error) { return thunkAPI.rejectWithValue(getErrorMessage(error)); }
+  }
+);
+
+export const refreshMyBids = createAsyncThunk(
+  "loads/refreshMyBids",
   async (_, thunkAPI) => {
     try { return await loadService.getMyBids(); }
     catch (error) { return thunkAPI.rejectWithValue(getErrorMessage(error)); }
@@ -435,7 +462,13 @@ const loadSlice = createSlice({
   state.message = action.payload;
   toast.error(action.payload);
 })
- 
+
+.addCase(refreshWonBids.pending, (state) => {})
+.addCase(refreshWonBids.fulfilled, (state, action) =>{
+  state.wonLoads = action.payload.data;
+})
+.addCase(refreshWonBids.rejected, (state, action) => {})
+
 .addCase(updateTracking.fulfilled,(state,action) =>{
   const updated = action.payload.data;
 
@@ -491,6 +524,12 @@ const loadSlice = createSlice({
   toast.error(action.payload);
 })
 
+.addCase(refreshCompletedLoads.pending, (state) => {})
+.addCase(refreshCompletedLoads.fulfilled, (state, action) =>{
+  state.completedLoads = action.payload.data;
+})
+.addCase(refreshCompletedLoads.rejected, (state, action) => {})
+
 .addCase(fetchMyBids.pending, (state) =>{state.isLoading = true})
 .addCase(fetchMyBids.fulfilled, (state, action) =>{
   state.isLoading = false;
@@ -501,6 +540,12 @@ const loadSlice = createSlice({
   state.message = action.payload;
   toast.error(action.payload);
 })
+
+.addCase(refreshMyBids.pending, (state) => {})
+.addCase(refreshMyBids.fulfilled, (state, action) =>{
+  state.myBids = action.payload.data;
+})
+.addCase(refreshMyBids.rejected, (state, action) => {})
 
 .addCase(updateMyBid.fulfilled, (state, action) =>{
   const updated = action.payload.data;

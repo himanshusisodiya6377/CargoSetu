@@ -20,6 +20,7 @@ const LoadList = () =>{
   useWebSocket(null, {
     loadUpdate: useCallback(() => { dispatch(refreshUserLoads()); }, [dispatch]),
     trackingUpdate: useCallback(() => { dispatch(refreshUserLoads()); }, [dispatch]),
+    bidsUpdated: useCallback(() => { dispatch(refreshUserLoads()); }, [dispatch]),
   });
 
   const delLoad =(id)=>{
