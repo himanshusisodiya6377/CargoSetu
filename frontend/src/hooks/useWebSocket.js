@@ -25,12 +25,13 @@ export function useWebSocket(loadId, handlers) {
       wsRef.current = ws;
       ws.onerror = () => {};
 
+      let authed = false;
+
       ws.onopen = () => {
         const token = localStorage.getItem("token");
         if (token) {
           ws.send(JSON.stringify({ type: "auth", token }));
-        }
-        if (loadId) {
+        } else if (loadId) {
           ws.send(JSON.stringify({ type: "subscribe", loadId }));
         }
       };
@@ -41,6 +42,11 @@ export function useWebSocket(loadId, handlers) {
           if (msg.type === "event") {
             const h = handlersRef.current[msg.event];
             if (h) h(msg.data);
+          } else if (msg.type === "auth_ok" && !authed) {
+            authed = true;
+            if (loadId) {
+              ws.send(JSON.stringify({ type: "subscribe", loadId }));
+            }
           }
         } catch {
           /* ignore malformed messages */

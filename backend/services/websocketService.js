@@ -101,10 +101,12 @@ function unsubscribeUser(userId, loadId) {
 function removeClient(userId, ws, loadId) {
   if (clients.has(userId)) {
     clients.get(userId).delete(ws);
-    if (clients.get(userId).size === 0) clients.delete(userId);
-  }
-  if (loadId) {
-    unsubscribeUser(userId, loadId);
+    if (clients.get(userId).size === 0) {
+      clients.delete(userId);
+      if (loadId) {
+        unsubscribeUser(userId, loadId);
+      }
+    }
   }
 }
 
