@@ -3,7 +3,7 @@ const BiddingLoad = require("../models/biddingLoad");
 const User = require("../models/User");
 const { calculateAndSave } = require("../utils/commission");
 const {sendBidPlacedEmail, sendBidWonEmail,sendLoadAssignedEmail,sendDeliveryConfirmationEmail} = require("../services/biddingEmailService");
-const { sendToLoadWatchers, sendToUser } = require("../services/websocketService");
+const { sendToLoadWatchers, sendToUser, broadcast } = require("../services/websocketService");
 
 const getBiddingHistory = async(req, res) =>{
   try {
@@ -97,6 +97,7 @@ const placeBid =async(req,res) =>{
           updatedAt: existingBid.updatedAt,
         },
       });
+      broadcast("loadUpdate", { loadId, bidUpdate: true });
 
       return res.status(200).json({
         success: true,
@@ -129,6 +130,7 @@ const placeBid =async(req,res) =>{
     sendToLoadWatchers(loadId, "newBid", {
       loadId, bid: { _id: bid._id, driver: { _id: driverId, name: req.user.name }, amount, createdAt: bid.createdAt },
     });
+    broadcast("loadUpdate", { loadId, bidUpdate: true });
 
     return res.status(201).json({
       success: true,
@@ -259,7 +261,7 @@ const updateBid = async (req, res)=>{
       return res.status(403).json({message: "Not your bid"});
 
     const load = await Load.findById(bid.load);
-    if (!load || load.status !== "OPEN")
+    if (!load || (load.status !== "OPEN" && load.status !== "BIDDING"))
       return res.status(400).json({ message: "Bidding is closed for this load"});
     if (new Date() > new Date(load.bidEndTime))
       return res.status(400).json({ message: "Bid window has ended"});
@@ -270,6 +272,19 @@ const updateBid = async (req, res)=>{
 
     bid.amount = amount;
     await bid.save();
+
+    const loadId = bid.load.toString();
+    sendToLoadWatchers(loadId, "newBid", {
+      loadId,
+      bid: {
+        _id: bid._id,
+        driver: { _id: req.user._id, name: req.user.name },
+        amount,
+        createdAt: bid.createdAt,
+        updatedAt: bid.updatedAt,
+      },
+    });
+    broadcast("loadUpdate", { loadId, bidUpdate: true });
 
     return res.status(200).json({ success: true, message: "Bid updated", data: bid });
   } catch (error) {
@@ -286,12 +301,16 @@ const deleteBid = async (req, res)=>{
       return res.status(403).json({message: "Not your bid"});
 
     const load = await Load.findById(bid.load);
-    if(!load || load.status !== "OPEN")
+    if(!load || (load.status !== "OPEN" && load.status !== "BIDDING"))
       return res.status(400).json({ message: "Cannot withdraw bid after load is assigned" });
     if(new Date() > new Date(load.bidEndTime))
       return res.status(400).json({ message: "Bid window has ended" });
 
+    const loadId = bid.load.toString();
     await bid.deleteOne();
+
+    sendToLoadWatchers(loadId, "bidDeleted", { loadId, bidId: bid._id });
+    broadcast("loadUpdate", { loadId, bidDeleted: true });
 
     return res.status(200).json({ success: true, message: "Bid withdrawn" });
   } catch (error) {
@@ -305,8 +324,11 @@ const deleteBidByAdmin = async (req, res)=>{
     const bid = await BiddingLoad.findById(req.params.id);
     if (!bid) return res.status(404).json({message: "Bid not found"});
 
-    // const loadId = bid.load;
+    const loadId = bid.load.toString();
     await bid.deleteOne();
+
+    sendToLoadWatchers(loadId, "bidDeleted", { loadId, bidId: bid._id });
+    broadcast("loadUpdate", { loadId, bidDeleted: true });
 
     return res.status(200).json({ success: true, message: "Bid deleted by admin" });
   } catch (error) {

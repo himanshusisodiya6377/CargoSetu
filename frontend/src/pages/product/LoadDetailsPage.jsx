@@ -106,6 +106,9 @@ export const LoadDetailsPage = () =>{
         );
       });
     },
+    bidDeleted: (event) => {
+      setBids((prev) => prev.filter((b) => b._id !== event.bidId));
+    },
     loadStatusChange: (event) => {
       dispatch(getLoad(id));
     },

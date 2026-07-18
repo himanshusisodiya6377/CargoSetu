@@ -1,6 +1,7 @@
 const Load = require("../models/Load");
 const biddingLoad=require("../models/biddingLoad.js")
 const { uploadToCloudinary, deleteCloudinaryImages } = require("../utils/fileUpload");
+const { broadcast } = require("../services/websocketService");
 
 const createLoad = async(req, res) =>{
   try {
@@ -33,6 +34,8 @@ const createLoad = async(req, res) =>{
 
     const load = await Load.create({ sender: req.user._id,title,maxBudget,description,pickupLocation,dropLocation,weight,dimensions,vehicleType,
       cargoType,bidDuration,bidStartTime,bidEndTime,images,status: "OPEN"});
+
+    broadcast("loadUpdate", { loadId: load._id, status: "OPEN" });
 
     return res.status(201).json({
       success: true,
@@ -101,6 +104,8 @@ const deleteLoad =async(req, res) =>{
     await deleteCloudinaryImages(load.images);
 
     await load.deleteOne();
+
+    broadcast("loadUpdate", { loadId: id, deleted: true });
 
     return res.status(200).json({
       success: true,
@@ -187,6 +192,8 @@ const updateLoad = async (req, res)=>{
     }
     
     await load.save();
+
+    broadcast("loadUpdate", { loadId: load._id, status: load.status });
 
     return res.status(200).json({
       success: true,
@@ -344,6 +351,8 @@ const deleteLoadByAdmin = async(req, res)=>{
 
     await biddingLoad.deleteMany({load: id});
     await load.deleteOne();
+
+    broadcast("loadUpdate", { loadId: id, deleted: true });
 
     return res.status(200).json({ success: true, message: "Load deleted by admin" });
   }catch (error){
