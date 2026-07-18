@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserLoads, deleteLoad } from "../../../redux/features/loadSlice";
+import { getUserLoads, refreshUserLoads, deleteLoad } from "../../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../../hooks/useRedirectLoggedOutUser";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import { FiPlusCircle, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
@@ -18,8 +18,8 @@ const LoadList = () =>{
   },[dispatch]);
 
   useWebSocket(null, {
-    loadUpdate: useCallback(() => { dispatch(getUserLoads()); }, [dispatch]),
-    trackingUpdate: useCallback(() => { dispatch(getUserLoads()); }, [dispatch]),
+    loadUpdate: useCallback(() => { dispatch(refreshUserLoads()); }, [dispatch]),
+    trackingUpdate: useCallback(() => { dispatch(refreshUserLoads()); }, [dispatch]),
   });
 
   const delLoad =(id)=>{

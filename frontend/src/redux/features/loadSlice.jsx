@@ -65,6 +65,16 @@ export const getUserLoads = createAsyncThunk(
   }
 );
 
+export const refreshUserLoads = createAsyncThunk(
+  "loads/refreshUserLoads",
+  async (_, thunkAPI) => {
+    try {
+      return await loadService.getUserLoads();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
 
 export const getLoad = createAsyncThunk(
   "load/getLoad",
@@ -160,6 +170,14 @@ export const fetchActiveLoads = createAsyncThunk(
   }
 );
 
+export const refreshActiveLoads = createAsyncThunk(
+  "loads/refreshActive",
+  async (_, thunkAPI) => {
+    try { return await loadService.getActiveLoads(); }
+    catch (error) { return thunkAPI.rejectWithValue(getErrorMessage(error)); }
+  }
+);
+
 export const fetchCompletedLoads = createAsyncThunk(
   "loads/getCompleted",
   async (_, thunkAPI) => {
@@ -196,6 +214,14 @@ export const deleteMyBid = createAsyncThunk(
 
 export const fetchAdminLoads = createAsyncThunk(
   "loads/fetchAdminLoads",
+  async (_, thunkAPI) => {
+    try { return await loadService.getAllLoadsAdmin(); }
+    catch (error) { return thunkAPI.rejectWithValue(getErrorMessage(error)); }
+  }
+);
+
+export const refreshAdminLoads = createAsyncThunk(
+  "loads/refreshAdmin",
   async (_, thunkAPI) => {
     try { return await loadService.getAllLoadsAdmin(); }
     catch (error) { return thunkAPI.rejectWithValue(getErrorMessage(error)); }
@@ -287,6 +313,12 @@ const loadSlice = createSlice({
         state.message = action.payload;
         toast.error(action.payload);
       })
+
+  .addCase(refreshUserLoads.pending, (state) => {})
+  .addCase(refreshUserLoads.fulfilled, (state, action) => {
+        state.userLoads = action.payload;
+      })
+  .addCase(refreshUserLoads.rejected, (state, action) => {})
 
   .addCase(getLoad.pending, (state) => {
         state.isLoading = true;
@@ -440,6 +472,14 @@ const loadSlice = createSlice({
   toast.error(action.payload);
 })
 
+.addCase(refreshActiveLoads.pending, (state) => {})
+.addCase(refreshActiveLoads.fulfilled, (state, action) =>{
+  state.activeLoads = action.payload.data;
+})
+.addCase(refreshActiveLoads.rejected, (state, action) =>{
+  state.message = action.payload;
+})
+
 .addCase(fetchCompletedLoads.pending, (state) => { state.isLoading = true; })
 .addCase(fetchCompletedLoads.fulfilled, (state, action) =>{
   state.isLoading = false;
@@ -489,6 +529,14 @@ const loadSlice = createSlice({
   state.isLoading = false;
   state.message = action.payload;
   toast.error(action.payload);
+})
+
+.addCase(refreshAdminLoads.pending, (state) => {})
+.addCase(refreshAdminLoads.fulfilled, (state, action) =>{
+  state.adminLoads = action.payload.data ?? [];
+})
+.addCase(refreshAdminLoads.rejected, (state, action) =>{
+  state.message = action.payload;
 })
 
 .addCase(deleteAdminLoad.fulfilled, (state, action) =>{

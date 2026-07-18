@@ -6,7 +6,7 @@ const razorpayInstance = require("../config/razorpay");
 const CommissionConfig = require("../models/CommissionConfig");
 const { calculateCommission } = require("../utils/commission");
 const { sendBidWonEmail, sendLoadAssignedEmail } = require("../services/biddingEmailService");
-const { sendToUser, sendToLoadWatchers, broadcast } = require("../services/websocketService");
+const { sendToUser, sendToLoadWatchers } = require("../services/websocketService");
 
 const createRazorpayOrder = async (req, res) => {
   try {
@@ -133,7 +133,6 @@ const verifyPayment = async (req, res) => {
     sendToUser(payment.driver._id.toString(), "bidWon", {
       loadId: load._id, title: load.title, amount: payment.amount,
     });
-    broadcast("loadUpdate", { loadId: load._id, status: "ASSIGNED" });
 
     try {
       await sendBidWonEmail({ driver: payment.driver, load, finalAmount: payment.amount });

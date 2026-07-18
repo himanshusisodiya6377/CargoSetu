@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserLoads } from "../../redux/features/loadSlice";
+import { getUserLoads, refreshUserLoads } from "../../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../../hooks/useRedirectLoggedOutUser";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useWebSocket } from "../../hooks/useWebSocket";
@@ -27,7 +27,7 @@ export const Dashboard = () =>{
 
   useWebSocket(null, {
     loadUpdate: useCallback(() => { if (role === "Sender") dispatch(getUserLoads()); }, [dispatch, role]),
-    trackingUpdate: useCallback(() => { if (role === "Sender") dispatch(getUserLoads()); }, [dispatch, role]),
+    trackingUpdate: useCallback(() => { if (role === "Sender") dispatch(refreshUserLoads()); }, [dispatch, role]),
   });
 
   const stats = useMemo(() =>({

@@ -30,6 +30,15 @@ const getBiddingHistory = async(req, res) =>{
   }
 };
 
+async function notifyBidUpdate(load, loadId) {
+  const senderId = load.sender?.toString();
+  if (senderId) sendToUser(senderId, "bidsUpdated", { loadId });
+  const admins = await User.find({ role: "Admin" }).select("_id");
+  for (const admin of admins) {
+    sendToUser(admin._id.toString(), "bidsUpdated", { loadId });
+  }
+}
+
 const placeBid =async(req,res) =>{
   try {
     const {loadId,amount} = req.body;
@@ -97,6 +106,7 @@ const placeBid =async(req,res) =>{
           updatedAt: existingBid.updatedAt,
         },
       });
+      notifyBidUpdate(load, loadId);
 
       return res.status(200).json({
         success: true,
@@ -129,6 +139,7 @@ const placeBid =async(req,res) =>{
     sendToLoadWatchers(loadId, "newBid", {
       loadId, bid: { _id: bid._id, driver: { _id: driverId, name: req.user.name }, amount, createdAt: bid.createdAt },
     });
+    notifyBidUpdate(load, loadId);
 
     return res.status(201).json({
       success: true,
@@ -282,6 +293,7 @@ const updateBid = async (req, res)=>{
         updatedAt: bid.updatedAt,
       },
     });
+    notifyBidUpdate(load, loadId);
 
     return res.status(200).json({ success: true, message: "Bid updated", data: bid });
   } catch (error) {

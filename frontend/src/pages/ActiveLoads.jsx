@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchActiveLoads } from "../redux/features/loadSlice";
+import { fetchActiveLoads, refreshActiveLoads } from "../redux/features/loadSlice";
 import { useRedirectLoggedOutUser } from "../hooks/useRedirectLoggedOutUser";
 import { useWebSocket } from "../hooks/useWebSocket";
 
@@ -30,6 +30,7 @@ const ActiveLoads = ()=>{
   useWebSocket(null, {
     loadUpdate: useCallback(() => { dispatch(fetchActiveLoads()); }, [dispatch]),
     loadStatusChange: useCallback(() => { dispatch(fetchActiveLoads()); }, [dispatch]),
+    bidsUpdated: useCallback(() => { dispatch(refreshActiveLoads()); }, [dispatch]),
   });
 
   return (

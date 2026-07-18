@@ -19,7 +19,7 @@ const commissionRoutes = require("./routes/commissionRoutes.js");
 const dns = require("dns");
 
 dns.setServers(["1.1.1.1","8.8.8.8"]);
-const { setupWebSocket, sendToUser, sendToLoadWatchers, broadcast } = require("./services/websocketService");
+const { setupWebSocket, sendToUser, sendToLoadWatchers } = require("./services/websocketService");
 const app = express();
 
 
@@ -68,7 +68,6 @@ cron.schedule("* * * * *",async ()=>{
       sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
         loadId: load._id, status: "BIDDING", bidEndTime: load.bidEndTime,
       });
-      broadcast("loadUpdate", { loadId: load._id, status: "BIDDING" });
     }
 
     // End bidding or set payment pending for loads whose bidEndTime has passed
@@ -86,7 +85,6 @@ cron.schedule("* * * * *",async ()=>{
         sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
           loadId: load._id, status: "ENDED",
         });
-        broadcast("loadUpdate", { loadId: load._id, status: "ENDED" });
         continue;
       }
 
@@ -102,7 +100,6 @@ cron.schedule("* * * * *",async ()=>{
         sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
           loadId: load._id, status: "ENDED",
         });
-        broadcast("loadUpdate", { loadId: load._id, status: "ENDED" });
         continue;
       }
 
@@ -130,7 +127,6 @@ cron.schedule("* * * * *",async ()=>{
       sendToLoadWatchers(load._id.toString(), "loadStatusChange", {
         loadId: load._id, status: "PAYMENT_PENDING", winningDriver: winningBid.driver,
       });
-      broadcast("loadUpdate", { loadId: load._id, status: "PAYMENT_PENDING" });
       sendToUser(winningBid.driver.toString(), "bidWon", {
         loadId: load._id, title: load.title, amount: winningBid.amount,
       });
