@@ -82,6 +82,20 @@ export const getLoad = createAsyncThunk(
   }
 );
 
+export const refreshLoad = createAsyncThunk(
+  "load/refresh",
+  async (id, thunkAPI) => {
+    try {
+      return await loadService.getLoad(id);
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message;
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const deleteLoad = createAsyncThunk(
   "loads/delete",
   async (id, thunkAPI) => {
@@ -288,6 +302,14 @@ const loadSlice = createSlice({
         toast.error(action.payload);
       })
 
+  .addCase(refreshLoad.pending, (state) => {})
+  .addCase(refreshLoad.fulfilled, (state, action) => {
+        state.load = action.payload;
+      })
+  .addCase(refreshLoad.rejected, (state, action) => {
+        state.message = action.payload;
+      })
+
   .addCase(deleteLoad.pending, () => {
       })
   .addCase(deleteLoad.fulfilled, (state, action) => {
@@ -357,11 +379,8 @@ const loadSlice = createSlice({
         toast.error(action.payload);
       })
 
-  .addCase(placeBid.pending, (state) =>{
-        state.isLoading = true;
-      })
+  .addCase(placeBid.pending, (state) =>{})
   .addCase(placeBid.fulfilled, (state) =>{
-        state.isLoading = false;
         state.isSuccess = true;
       })
   .addCase(placeBid.rejected, (state,action) =>{

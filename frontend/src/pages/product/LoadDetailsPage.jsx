@@ -3,7 +3,7 @@ import { commonClassNameOfInput } from "../../component/common/Design";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { getLoad, placeBid, updateTracking } from "../../redux/features/loadSlice";
+import { getLoad, refreshLoad, placeBid, updateTracking } from "../../redux/features/loadSlice";
 import { createPaymentOrder, verifyPayment, fetchPaymentDetails } from "../../redux/features/paymentSlice";
 import { toast } from "react-toastify";
 import { FiPackage, FiTruck, FiCheckCircle, FiCreditCard, FiCheck } from "react-icons/fi";
@@ -109,17 +109,17 @@ export const LoadDetailsPage = () =>{
     bidDeleted: (event) => {
       setBids((prev) => prev.filter((b) => b._id !== event.bidId));
     },
-    loadStatusChange: (event) => {
-      dispatch(getLoad(id));
+    loadStatusChange: () => {
+      dispatch(refreshLoad(id));
     },
-    trackingUpdate: (event) => {
-      dispatch(getLoad(id));
+    trackingUpdate: () => {
+      dispatch(refreshLoad(id));
     },
     bidWon: () => {
-      dispatch(getLoad(id));
+      dispatch(refreshLoad(id));
     },
     loadUpdate: () => {
-      dispatch(getLoad(id));
+      dispatch(refreshLoad(id));
       fetchBids();
     },
   });
