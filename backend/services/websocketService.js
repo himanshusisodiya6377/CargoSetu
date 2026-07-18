@@ -114,7 +114,9 @@ function sendToUser(userId, event, data) {
   if (!clients.has(userId)) return;
   const msg = JSON.stringify({ type: "event", event, data });
   for (const ws of clients.get(userId)) {
-    if (ws.readyState === 1) ws.send(msg);
+    if (ws.readyState === 1) {
+      try { ws.send(msg); } catch {}
+    }
   }
 }
 
@@ -124,7 +126,9 @@ function sendToLoadWatchers(loadId, event, data) {
   for (const userId of loadSubscriptions.get(loadId)) {
     if (clients.has(userId)) {
       for (const ws of clients.get(userId)) {
-        if (ws.readyState === 1) ws.send(msg);
+        if (ws.readyState === 1) {
+          try { ws.send(msg); } catch {}
+        }
       }
     }
   }
@@ -134,7 +138,9 @@ function broadcast(event, data) {
   const msg = JSON.stringify({ type: "event", event, data });
   for (const [, connections] of clients) {
     for (const ws of connections) {
-      if (ws.readyState === 1) ws.send(msg);
+      if (ws.readyState === 1) {
+        try { ws.send(msg); } catch {}
+      }
     }
   }
 }

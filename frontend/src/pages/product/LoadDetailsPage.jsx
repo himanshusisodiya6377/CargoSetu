@@ -118,6 +118,10 @@ export const LoadDetailsPage = () =>{
     bidWon: () => {
       dispatch(getLoad(id));
     },
+    loadUpdate: () => {
+      dispatch(getLoad(id));
+      fetchBids();
+    },
   });
 
   useEffect(() =>{
